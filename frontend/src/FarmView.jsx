@@ -24,7 +24,7 @@ function chunkRing(cx, cy) {
   return 3;
 }
 
-var RING_COST = [0, 25000, 50000, 100000, 250000];
+var RING_COST = [0, 100000, 500000, 1000000];
 
 // Seconds to fully grow each crop (dev times — multiply x60 for production)
 var CROP_GROW_SECONDS = {

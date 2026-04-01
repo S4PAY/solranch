@@ -176,7 +176,10 @@ router.post('/buy', async (req, res) => {
       const tg = require('../services/tgbot');
       const rancherName = await db.query('SELECT ranch_name FROM ranchers WHERE wallet = $1', [wallet]);
       const name = rancherName.rows[0]?.ranch_name || 'Unknown';
-      tg.sendTg(`🔥 <b>FARM BURN</b>\n${name} burned ${totalCost.toLocaleString()} $RANCH\nBought: ${qty}x ${itemType}\n\n🌐 <a href="https://solranch.farm">solranch.farm</a>`).catch(() => {});
+      var catEmoji = { building: '🏠', animal: '🐄', crop: '🌾', machine: '⚙️', deco: '🌳' };
+      var emoji = catEmoji[itemCategory] || '🔥';
+      var itemLabel = itemType.replace(/_/g, ' ');
+      tg.sendTg(emoji + ' <b>' + name + '</b> bought <b>' + qty + 'x ' + itemLabel + '</b>\n🔥 Burned <b>' + totalCost.toLocaleString() + ' $RANCH</b>\n\n🌐 <a href="https://solranch.farm/app">solranch.farm</a> | <a href="https://x.com/Solranchfarm">X</a>').catch(() => {});
     } catch(e) {}
 
     res.json({
@@ -357,6 +360,14 @@ router.post('/harvest', async (req, res) => {
     // Remove crop (consumed)
     await db.query('DELETE FROM ranch_crops WHERE id = $1', [cropId]);
 
+    // TG notification
+    try {
+      const tg = require('../services/tgbot');
+      const rn = await db.query('SELECT ranch_name FROM ranchers WHERE wallet = $1', [wallet]);
+      const uname = rn.rows[0]?.ranch_name || 'Unknown';
+      tg.sendTg('🌾 <b>' + uname + '</b> harvested <b>' + c.crop_type.replace(/_/g, ' ') + '</b>!\n⭐ <b>+' + pts + ' pts</b>\n\n🌐 <a href="https://solranch.farm/app">solranch.farm</a>').catch(() => {});
+    } catch(e) {}
+
     res.json({
       success: true,
       crop: c.crop_type,
@@ -387,6 +398,15 @@ router.post('/feed', async (req, res) => {
 
     // Update all animals last_fed_at
     await db.query('UPDATE ranch_animals SET last_fed_at = NOW() WHERE wallet = $1', [wallet]);
+
+    // TG notification
+    try {
+      const tg = require('../services/tgbot');
+      const rn = await db.query('SELECT ranch_name FROM ranchers WHERE wallet = $1', [wallet]);
+      const uname = rn.rows[0]?.ranch_name || 'Unknown';
+      const animalCount = await db.query('SELECT COUNT(*) as cnt FROM ranch_animals WHERE wallet = $1', [wallet]);
+      tg.sendTg('🐄 <b>' + uname + '</b> fed their animals!\n🐾 <b>' + animalCount.rows[0].cnt + ' animals</b> earning points today\n\n🌐 <a href="https://solranch.farm/app">solranch.farm</a>').catch(() => {});
+    } catch(e) {}
 
     res.json({ success: true, message: 'All animals fed! They will earn points today.' });
   } catch (err) {
@@ -429,6 +449,14 @@ router.post('/unlock', async (req, res) => {
       'INSERT INTO ranch_chunks (wallet, chunk_x, chunk_y, burn_tx, burn_amount) VALUES ($1, $2, $3, $4, $5)',
       [wallet, chunkX, chunkY, txSignature, cost]
     );
+
+    // TG notification
+    try {
+      const tg = require('../services/tgbot');
+      const rn = await db.query('SELECT ranch_name FROM ranchers WHERE wallet = $1', [wallet]);
+      const uname = rn.rows[0]?.ranch_name || 'Unknown';
+      tg.sendTg('🗺️ <b>' + uname + '</b> expanded their ranch!\n🔥 Burned <b>' + cost.toLocaleString() + ' $RANCH</b> to unlock new land\n\n🌐 <a href="https://solranch.farm/app">solranch.farm</a>').catch(() => {});
+    } catch(e) {}
 
     res.json({
       success: true,

@@ -53,7 +53,8 @@ async function calculateFarmPoints() {
     farmPts = buildingPts + animalPts + machinePts + decoPts;
     if (farmPts <= 0) continue;
 
-    farmPts = Math.round(farmPts * 10) / 10;
+    farmPts = Math.round(farmPts);
+    if (farmPts < 1 && (buildingPts + animalPts + machinePts + decoPts) > 0) farmPts = 1;
 
     // Get rancher id
     const rancher = await db.query('SELECT id FROM ranchers WHERE wallet = $1', [w]);
