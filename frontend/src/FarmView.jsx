@@ -439,10 +439,11 @@ function BurnPopup({ item, cat, wallet, onClose, onSuccess }) {
   var costStr = cost >= 1000000 ? (cost/1000000)+"M" : cost >= 1000 ? (cost/1000)+"k" : String(cost);
   var BURN_ADDR = "1nc1nerator11111111111111111111111111111111";
 
+  var CAT_MAP = { buildings: "building", animals: "animal", crops: "crop", machines: "machine", decorations: "deco" };
   function doBuy() {
     if (!txSig.trim()) { setErr("Paste your TX signature"); return; }
     setSubmitting(true); setErr(null);
-    api("/farm/buy", { method: "POST", body: JSON.stringify({ wallet: wallet, itemCategory: cat, itemType: item.name, quantity: 1, txSignature: txSig.trim() }) })
+    api("/farm/buy", { method: "POST", body: JSON.stringify({ wallet: wallet, itemCategory: CAT_MAP[cat] || cat, itemType: item.name, quantity: 1, txSignature: txSig.trim() }) })
       .then(function(data) {
         setSubmitting(false);
         if (!data) { setErr("Request failed"); return; }
@@ -585,6 +586,45 @@ export default function FarmView() {
   var [toast, setToast] = useState(null);
   var [shopItems, setShopItems] = useState(null);
   var [farmData, setFarmData] = useState(null);
+
+  // Hydrate farm from DB
+  useEffect(function() {
+    if (!farmData) return;
+    var placed = [];
+    // Buildings
+    if (farmData.buildings) farmData.buildings.forEach(function(b) {
+      var def = BUILDINGS[b.building_type];
+      if (def) placed.push({ type: b.building_type, tx: b.tile_x, ty: b.tile_y, w: def.w, h: def.h, dbId: b.id, dbCat: "building" });
+    });
+    // Animals
+    if (farmData.animals) farmData.animals.forEach(function(a) {
+      var def = BUILDINGS[a.animal_type];
+      if (def) placed.push({ type: a.animal_type, tx: a.tile_x, ty: a.tile_y, w: def.w, h: def.h, dbId: a.id, dbCat: "animal" });
+    });
+    // Crops
+    if (farmData.crops) farmData.crops.forEach(function(c) {
+      var def = BUILDINGS[c.crop_type];
+      if (def) placed.push({ type: c.crop_type, tx: c.tile_x, ty: c.tile_y, w: def.w, h: def.h, dbId: c.id, dbCat: "crop", plantedAt: new Date(c.planted_at).getTime(), stage: c.stage });
+    });
+    // Machines
+    if (farmData.machines) farmData.machines.forEach(function(m) {
+      var def = BUILDINGS[m.machine_type];
+      if (def) placed.push({ type: m.machine_type, tx: m.tile_x, ty: m.tile_y, w: def.w, h: def.h, dbId: m.id, dbCat: "machine" });
+    });
+    // Decorations
+    if (farmData.decorations) farmData.decorations.forEach(function(d) {
+      var def = BUILDINGS[d.deco_type];
+      if (def) placed.push({ type: d.deco_type, tx: d.tile_x, ty: d.tile_y, w: def.w, h: def.h, dbId: d.id, dbCat: "deco" });
+    });
+    setPlacedBuildings(placed);
+    // Chunks
+    if (farmData.chunks) {
+      var chunks = new Set(START_CHUNKS);
+      farmData.chunks.forEach(function(k) { chunks.add(k); });
+      setUnlocked(chunks);
+    }
+  }, [farmData]);
+
   var [buyItem, setBuyItem] = useState(null);
   var placingRef = useRef(null);
   var placedRef = useRef([]);
@@ -605,6 +645,7 @@ export default function FarmView() {
     var addr = inputAddr || walletInput.trim();
     if (!addr || addr.length < 32 || addr.length > 44) { showToastMsg("Enter a valid Solana wallet address", "error"); return; }
     setWallet(addr);
+    window._srWallet = addr;
     setLoading(true);
     var refCode = new URLSearchParams(window.location.search).get("ref") || "";
     api("/ranchers/register", { method: "POST", body: JSON.stringify({ wallet: addr, referralCode: refCode }) })
@@ -828,7 +869,8 @@ export default function FarmView() {
           // In placement mode, immediately position ghost at tap
           if (placingRef.current) {
             var worldPoint = cam.getWorldPoint(pointer.x, pointer.y);
-            var def = BUILDINGS[placingRef.current];
+            var _pType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
+            var def = BUILDINGS[_pType];
             if (def) {
               var tx = Math.floor(worldPoint.x / TILE);
               var ty = Math.floor(worldPoint.y / TILE);
@@ -873,11 +915,14 @@ export default function FarmView() {
 
           // Placement mode
           if (placingRef.current) {
-            var def = BUILDINGS[placingRef.current];
+            var placeType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
+            var def = BUILDINGS[placeType];
             var gx = self.ghostPos.x;
             var gy = self.ghostPos.y;
-            if (def && self.isValidPlacement(placingRef.current, gx, gy)) {
-              var newBuilding = { type: placingRef.current, tx: gx, ty: gy, w: def.w, h: def.h };
+            var placeType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
+            var placeCat = typeof placingRef.current === "object" ? placingRef.current.category : null;
+            if (def && self.isValidPlacement(placeType, gx, gy)) {
+              var newBuilding = { type: placeType, tx: gx, ty: gy, w: def.w, h: def.h };
               if (def.crop) { newBuilding.plantedAt = Date.now(); newBuilding.stage = 0; }
               setPlacedBuildings(function(prev) { return prev.concat([newBuilding]); });
               setPlacing(null);
@@ -885,6 +930,14 @@ export default function FarmView() {
               if (self.ghostSprite) self.ghostSprite.setVisible(false);
               self.drawAllBuildings(placedRef.current.concat([newBuilding]));
               setPanel(null);
+              // POST to API if from inventory
+              if (placeCat && window._srWallet) {
+                api("/farm/place", { method: "POST", body: JSON.stringify({ wallet: window._srWallet, itemCategory: placeCat, itemType: placeType, tileX: gx, tileY: gy }) })
+                  .then(function(data) {
+                    if (data && data.error) { console.error("[PLACE]", data.error); }
+                    api("/farm/" + window._srWallet).then(function(d) { if (d) setFarmData(d); });
+                  });
+              }
             }
             return;
           }
@@ -1507,7 +1560,7 @@ export default function FarmView() {
                       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
                         React.createElement("span", { style: { fontSize: 16, fontWeight: 700, color: "#f0c040" } }, "x" + item.quantity),
                         React.createElement("button", {
-                          onClick: function() { setPanel(null); setPlacing(item.item_type); showToastMsg("Tap the farm to place " + item.item_type.replace(/_/g, " ")); },
+                          onClick: function() { setPanel(null); setPlacing({ type: item.item_type, category: item.item_category }); showToastMsg("Tap the farm to place " + item.item_type.replace(/_/g, " ")); },
                           style: { padding: "6px 14px", border: "none", borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer", color: "#e8ddd0", background: "linear-gradient(180deg,#3a5a2a,#2d4a20)", boxShadow: "inset 0 1px 0 rgba(100,160,80,.2),0 2px 4px rgba(0,0,0,.3)" }
                         }, "PLACE")
                       )
