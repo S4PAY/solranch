@@ -6,16 +6,14 @@ const db = require('../db/init');
 async function verifyBurn(wallet, txSignature, expectedAmount) {
   try {
     // Check TX not already used
-    const used = await db.query(
-      "SELECT id FROM ranch_inventory WHERE burn_tx = $1 UNION SELECT id FROM ranch_chunks WHERE burn_tx = $1 UNION SELECT id FROM ranch_buildings WHERE burn_tx = $1 UNION SELECT id FROM ranch_animals WHERE burn_tx = $1 UNION SELECT id FROM ranch_machines WHERE burn_tx = $1 UNION SELECT id FROM ranch_decorations WHERE burn_tx = $1 UNION SELECT id FROM ranch_crops WHERE burn_tx = $1",
-      [txSignature]
-    );
+    const used = await db.query('SELECT tx_sig FROM used_burn_txs WHERE tx_sig = $1', [txSignature]);
     if (used.rows.length > 0) return { ok: false, error: 'TX already used' };
 
     // Call Helius to verify
     const HELIUS_KEY = process.env.HELIUS_API_KEY;
     if (!HELIUS_KEY) {
       console.warn('[FARM] No Helius key, skipping verification in dev');
+      await db.query('INSERT INTO used_burn_txs (tx_sig, wallet, used_for) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [txSignature, wallet, 'dev-skip']);
       return { ok: true }; // Dev mode: skip verification
     }
 
@@ -44,6 +42,7 @@ async function verifyBurn(wallet, txSignature, expectedAmount) {
       }
     }
     if (!burnFound) return { ok: false, error: 'Burn not verified. Check wallet, amount, and burn address.' };
+    await db.query('INSERT INTO used_burn_txs (tx_sig, wallet, used_for) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [txSignature, wallet, 'burn-verified']);
     return { ok: true };
   } catch (err) {
     console.error('[FARM] Verify burn error:', err.message);

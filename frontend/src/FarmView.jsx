@@ -240,16 +240,13 @@ function NameModal({ currentName, onSave, onCancel, isNew }) {
 function WalletScreen({ walletInput, setWalletInput, onConnect }) {
   return React.createElement("div", {
     style: {
-      position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-      background: "radial-gradient(ellipse at center, #1a1510, #0e0b08)",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      zIndex: 100, fontFamily: "'Pixelify Sans', sans-serif", gap: 16, padding: 24,
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at center, #1a1510, #0e0b08)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 100, fontFamily: "'Pixelify Sans', sans-serif", gap: 16, padding: 24, boxSizing: "border-box", overflow: "hidden",
     }
   },
     React.createElement("div", { style: { fontSize: 36, color: "#d4a636", fontWeight: 900, letterSpacing: 4, textShadow: "0 3px 0 rgba(26,21,15,0.8), 0 0 30px rgba(212,166,54,0.2)" } }, "SOL RANCH"),
     React.createElement("div", { style: { width: 60, height: 1, background: "linear-gradient(90deg, transparent, #d4a636, transparent)", margin: "4px 0" } }),
     React.createElement("div", { style: { fontSize: 13, color: "#9c8e78", letterSpacing: 3, textTransform: "uppercase" } }, "Virtual Ranch for Degens"),
-    React.createElement("div", { style: { width: "100%", maxWidth: 380, marginTop: 16 } },
+    React.createElement("div", { style: { width: "calc(100% - 48px)", maxWidth: 340, marginTop: 16 } },
       React.createElement("input", {
         type: "text", placeholder: "Paste your Solana wallet address...",
         value: walletInput,
@@ -1535,7 +1532,7 @@ export default function FarmView() {
               boxShadow: "0 3px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
             }
           },
-            React.createElement("div", { style: { fontSize: 13, color: "#f0c040", fontWeight: 700, letterSpacing: 1, textShadow: "0 2px 4px rgba(0,0,0,0.5)" } }, ranchName),
+            React.createElement("div", { onClick: function() { if (wallet) setShowNameModal(true); }, style: { fontSize: 13, color: "#f0c040", fontWeight: 700, letterSpacing: 1, textShadow: "0 2px 4px rgba(0,0,0,0.5)", cursor: "pointer", pointerEvents: "auto" } }, ranchName),
             React.createElement("div", { style: { fontSize: 9, color: "#9c8e78", marginTop: 1 } },
               getTier(points).name + " Ranch"
             )
