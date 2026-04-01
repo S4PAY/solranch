@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Phaser from "phaser";
 
-var API_BASE = window.location.origin + "/dev/api";
+var API_BASE = window.location.origin + (window.location.pathname.startsWith("/dev") ? "/dev/api" : "/api");
 async function api(path, opts) {
   try {
     var res = await fetch(API_BASE + path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
