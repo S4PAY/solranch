@@ -254,383 +254,12 @@ function WalletScreen({ walletInput, setWalletInput, onConnect }) {
 }
 
 // ─── MENU OVERLAY ───
-function MenuOverlay({ tab, setTab, onClose, taskStates, pens, currentPen, setCurrentPen, leaderboard, lbPeriod, setLbPeriod, streakDays, lifetimePts, usdcEarned, holdTier, rankInfo, tokenInfo, points }) {
-  var tabs = [
-    { k: "tasks", label: "Tasks", icon: "\u2705" },
-    { k: "pens", label: "Pens", icon: "\uD83D\uDC04" },
-    { k: "stats", label: "Stats", icon: "\uD83D\uDCCA" },
-    { k: "leaderboard", label: "Board", icon: "\uD83C\uDFC6" },
-    { k: "rewards", label: "Rewards", icon: "\uD83D\uDCB0" },
-    { k: "raids", label: "Raids", icon: "\u2694\uFE0F" },
-  ];
-
-  return React.createElement("div", {
-    style: {
-      position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-      background: "rgba(10,8,5,0.95)", backdropFilter: "blur(10px)",
-      zIndex: 50, fontFamily: "'Pixelify Sans', sans-serif",
-      display: "flex", flexDirection: "column",
-    }
-  },
-    // Top bar
-    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid #2a1f14" } },
-      React.createElement("div", { style: { fontSize: 16, color: "#d4a636", fontWeight: 700, letterSpacing: 2 } }, "SOL RANCH"),
-      React.createElement("button", {
-        onClick: onClose,
-        style: { width: 34, height: 34, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, #5a3020, #3a1a10)", border: "2px solid rgba(0,0,0,0.3)", boxShadow: "0 2px 6px rgba(0,0,0,0.4)", color: "#e8ddd0", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }
-      }, "\u2715")
-    ),
-    // Tab bar
-    React.createElement("div", { style: { display: "flex", justifyContent: "space-around", padding: "8px 4px", borderBottom: "1px solid #2a1f14", background: "rgba(20,16,10,0.5)" } },
-      tabs.map(function(t) {
-        var active = tab === t.k;
-        return React.createElement("button", {
-          key: t.k, onClick: function() { setTab(t.k); },
-          style: {
-            flex: 1, padding: "6px 2px", border: "none", borderBottom: active ? "2px solid #d4a636" : "2px solid transparent",
-            background: "transparent", color: active ? "#f0c040" : "#6d5838",
-            fontSize: 9, fontWeight: active ? 700 : 500, cursor: "pointer",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-            fontFamily: "'Pixelify Sans', sans-serif",
-          }
-        },
-          React.createElement("span", { style: { fontSize: 16 } }, t.icon),
-          React.createElement("span", null, t.label)
-        );
-      })
-    ),
-    // Content
-    React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "14px" } },
-      tab === "tasks" && React.createElement(TasksPanel, { taskStates: taskStates }),
-      tab === "pens" && React.createElement(PensPanel, { pens: pens, currentPen: currentPen, setCurrentPen: setCurrentPen }),
-      tab === "stats" && React.createElement(StatsPanel, { streakDays: streakDays, lifetimePts: lifetimePts, usdcEarned: usdcEarned, holdTier: holdTier, rankInfo: rankInfo, tokenInfo: tokenInfo, points: points }),
-      tab === "leaderboard" && React.createElement(LeaderboardPanel, { leaderboard: leaderboard, lbPeriod: lbPeriod, setLbPeriod: setLbPeriod }),
-      tab === "rewards" && React.createElement(RewardsPanel, { usdcEarned: usdcEarned, rewards: rewards, burns: burns, treasury: treasury, tokenInfo: tokenInfo }),
-      tab === "raids" && React.createElement(RaidsPanel, { raidTargets: raidTargets, raidStatus: raidStatus, raidResult: raidResult, wallet: wallet })
-    )
-  );
-}
-
 // ─── TASKS PANEL ───
-function TasksPanel({ taskStates }) {
-  var dailyTasks = [
-    { key: "checkin", name: "MORNING FEED", desc: "Feed the cattle. Start your day.", pts: 10, icon: "\uD83D\uDC04", freq: "Daily", action: function(){window._srDoCheckin&&window._srDoCheckin();} },
-    { key: "water", name: "WATER CATTLE", desc: "Fill the troughs. Happy cattle.", pts: 15, icon: "\uD83D\uDCA7", freq: "Daily", action: function(){window._srDoWater&&window._srDoWater();} },
-    { key: "patrol", name: "PATROL FENCES", desc: "Walk the perimeter. Keep safe.", pts: 20, icon: "\uD83D\uDEE1\uFE0F", freq: "Daily", action: function(){window._srDoPatrol&&window._srDoPatrol();} },
-    { key: "social", name: "REPAIR FENCES", desc: "Share the ranch on X.", pts: 30, icon: "\uD83D\uDD28", freq: "Daily", action: function(){window._srDoSocial&&window._srDoSocial();} },
-    { key: "evening", name: "EVENING FEED", desc: "Come back after 12h.", pts: 15, icon: "\uD83C\uDF19", freq: "12h cooldown", action: function(){window._srDoEvening&&window._srDoEvening();} },
-  ];
-  var weeklyTasks = [
-    { key: "brand", name: "BRAND LIVESTOCK", desc: "Mark your herd. Big reward.", pts: 75, icon: "\uD83D\uDD25", freq: "Weekly", action: function(){window._srDoBrand&&window._srDoBrand();} },
-  ];
-
-  function TaskCard(t) {
-    var done = taskStates[t.key] || false;
-    return React.createElement("div", {
-      style: {
-        padding: 14, borderRadius: 10,
-        background: done ? "rgba(76,175,80,0.06)" : "linear-gradient(180deg, #1f1a14, #161210)",
-        border: done ? "1px solid rgba(76,175,80,0.2)" : "1px solid #2a1f14",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.4)",
-        opacity: done ? 0.5 : 1,
-      }
-    },
-      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
-          React.createElement("span", { style: { fontSize: 20 } }, t.icon),
-          React.createElement("div", null,
-            React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "#e8ddd0", letterSpacing: 1.5 } }, t.name),
-            React.createElement("div", { style: { fontSize: 9, color: "#6d5838", marginTop: 1 } }, t.freq)
-          )
-        ),
-        React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "#f0c040", textShadow: "0 1px 2px rgba(0,0,0,0.5)" } }, "+" + t.pts + " pts")
-      ),
-      React.createElement("div", { style: { fontSize: 10, color: "#9c8e78", marginBottom: 10 } }, t.desc),
-      React.createElement("div", { style: { height: 3, background: "#2a1f14", borderRadius: 2, marginBottom: 10 } },
-        React.createElement("div", { style: { height: "100%", width: done ? "100%" : "0%", background: "linear-gradient(90deg, #b84627, #d4a636)", borderRadius: 2 } })
-      ),
-      React.createElement("button", {
-        disabled: done,
-        onClick: t.action,
-        style: {
-          width: "100%", padding: "8px 0", border: "none", borderRadius: 6,
-          fontSize: 11, fontWeight: 700, letterSpacing: 2, cursor: done ? "default" : "pointer",
-          color: "#e8ddd0",
-          background: done
-            ? "linear-gradient(180deg, #3a5a2a, #2d4a20)"
-            : "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),linear-gradient(180deg,#8b5e3c,#6d4a2d 50%,#5c3f24)",
-          boxShadow: done ? "none" : "inset 0 1px 0 rgba(180,140,90,.3),0 2px 6px rgba(0,0,0,.4)",
-          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-        }
-      }, done ? "\u2713 DONE" : t.name)
-    );
-  }
-
-  return React.createElement("div", null,
-    React.createElement("div", { style: { fontSize: 13, color: "#d4a636", fontWeight: 700, letterSpacing: 3, marginBottom: 12 } }, "DAILY CHORES"),
-    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 } },
-      dailyTasks.map(function(t) { return React.createElement(TaskCard, Object.assign({ key: t.key }, t)); })
-    ),
-    React.createElement("div", { style: { fontSize: 13, color: "#d4a636", fontWeight: 700, letterSpacing: 3, marginBottom: 12 } }, "WEEKLY ROUNDUP"),
-    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } },
-      weeklyTasks.map(function(t) { return React.createElement(TaskCard, Object.assign({ key: t.key }, t)); })
-    )
-  );
-}
-
 // ─── PENS PANEL ───
-function PensPanel({ pens, currentPen, setCurrentPen }) {
-  var pen = pens[currentPen];
-  var penTasks = pen && pen.tasks ? Object.entries(pen.tasks).map(function(e) { return { id: e[0], name: e[1].name || e[0], pts: e[1].basePts || 0, cooldown: (e[1].cooldownHrs >= 24 ? "Daily" : e[1].cooldownHrs + "h"), icon: pen.icon, available: e[1].available, cooldownLeft: e[1].cooldownLeft || 0, healthRestore: e[1].healthRestore || 0 }; }) : [];
-
-  return React.createElement("div", null,
-    // Pen selector
-    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 16 } },
-      pens.map(function(p, i) {
-        var active = i === currentPen;
-        return React.createElement("button", {
-          key: i, onClick: function() { setCurrentPen(i); },
-          style: {
-            width: 44, height: 44, borderRadius: "50%",
-            border: active ? "2px solid #d4a636" : "2px solid #2a1f14",
-            background: active ? "rgba(212,166,54,0.15)" : "rgba(20,16,10,0.5)",
-            color: active ? "#f0c040" : "#6d5838",
-            fontSize: 20, cursor: "pointer",
-            opacity: p.unlocked ? 1 : 0.35,
-            boxShadow: active ? "0 0 12px rgba(212,166,54,0.3)" : "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }
-        }, p.icon);
-      })
-    ),
-    // Pen info card
-    pen && React.createElement("div", {
-      style: { padding: 16, background: "linear-gradient(180deg, #1f1a14, #161210)", border: "1px solid #2a1f14", borderRadius: 12, marginBottom: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }
-    },
-      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
-          React.createElement("span", { style: { fontSize: 32 } }, pen.icon),
-          React.createElement("div", null,
-            React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: "#e8ddd0", letterSpacing: 1 } }, pen.name),
-            React.createElement("div", { style: { fontSize: 9, color: "#6d5838" } }, pen.unlocked ? "Active" : "Requires " + (pen.minBalance >= 1000000 ? (pen.minBalance/1000000)+"M" : (pen.minBalance/1000)+"k") + " $RANCH")
-          )
-        ),
-        pen.unlocked && React.createElement("div", { style: { textAlign: "right" } },
-          React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: pen.health > 50 ? "#4caf50" : pen.health > 25 ? "#f0c040" : "#ff6b6b" } }, pen.health + "%"),
-          React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1 } }, "HEALTH")
-        )
-      ),
-      pen.unlocked && React.createElement("div", { style: { height: 8, background: "#2a1f14", borderRadius: 4 } },
-        React.createElement("div", { style: { height: "100%", borderRadius: 4, width: pen.health + "%", background: pen.health > 50 ? "linear-gradient(90deg, #4caf50, #66bb6a)" : pen.health > 25 ? "linear-gradient(90deg, #d4a636, #f0c040)" : "linear-gradient(90deg, #b84627, #d4581e)", transition: "width 0.5s" } })
-      )
-    ),
-    // Pen tasks or locked
-    !pen.unlocked ? React.createElement("div", {
-      style: { padding: 30, textAlign: "center", background: "linear-gradient(180deg, #1f1a14, #161210)", border: "1px solid #2a1f14", borderRadius: 12 }
-    },
-      React.createElement("div", { style: { fontSize: 32, marginBottom: 8 } }, "\uD83D\uDD12"),
-      React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "#9c8e78", letterSpacing: 2, marginBottom: 8 } }, "LOCKED"),
-      React.createElement("div", { style: { fontSize: 11, color: "#6d5838" } }, "Hold " + (pen.minBalance >= 1000000 ? (pen.minBalance/1000000)+"M" : (pen.minBalance/1000)+"k") + " $RANCH to unlock")
-    ) : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } },
-      penTasks.map(function(t, i) {
-        return React.createElement("div", {
-          key: i,
-          style: { padding: 12, background: "linear-gradient(180deg, #1f1a14, #161210)", border: "1px solid #2a1f14", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" }
-        },
-          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
-            React.createElement("span", { style: { fontSize: 20 } }, t.icon),
-            React.createElement("div", null,
-              React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "#e8ddd0" } }, t.name),
-              React.createElement("div", { style: { fontSize: 9, color: "#6d5838" } }, "Every " + t.cooldown)
-            )
-          ),
-          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
-            React.createElement("span", { style: { fontSize: 12, color: "#f0c040", fontWeight: 700 } }, "+" + t.pts),
-            React.createElement("button", {
-              style: {
-                padding: "6px 14px", border: "none", borderRadius: 6,
-                background: "linear-gradient(180deg,#8b5e3c,#5c3f24)",
-                boxShadow: "inset 0 1px 0 rgba(180,140,90,.3),0 2px 4px rgba(0,0,0,.3)",
-                color: "#e8ddd0", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: 1,
-              }
-            }, !t.available ? (t.cooldownLeft > 0 ? t.cooldownLeft + "h LEFT" : "DONE") : t.name.toUpperCase())
-          )
-        );
-      })
-    )
-  );
-}
-
 // ─── STATS PANEL ───
-function StatsPanel({ streakDays, lifetimePts, usdcEarned, holdTier, rankInfo, tokenInfo, points }) {
-  var streakMult = streakDays >= 30 ? "3x" : streakDays >= 7 ? "2x" : "1x";
-  var totalMult = (parseFloat(rankInfo.mult) || 1) * (holdTier.mult || 1) * (streakDays >= 30 ? 3 : streakDays >= 7 ? 2 : 1);
-
-  function StatCard(label, value, color) {
-    return React.createElement("div", {
-      style: { padding: "14px 10px", background: "linear-gradient(180deg, #1f1a14, #161210)", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" }
-    },
-      React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: color || "#f0c040", lineHeight: 1, textShadow: "0 1px 4px rgba(0,0,0,0.5)" } }, value),
-      React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 4 } }, label)
-    );
-  }
-
-  return React.createElement("div", null,
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 } },
-      StatCard("Points Today", points.toLocaleString(), "#f0c040"),
-      StatCard("Day Streak", streakDays, "#ff9800"),
-      StatCard("Streak Bonus", streakMult, "#4caf50")
-    ),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 } },
-      StatCard("Lifetime Pts", lifetimePts.toLocaleString(), "#f0c040"),
-      StatCard("USDC Earned", "$" + usdcEarned.toFixed(2), "#4caf50"),
-      StatCard("Hold Tier", holdTier.name, "#e8ddd0"),
-      StatCard("Ranch Rank", rankInfo.name, "#b84627")
-    ),
-    // Multiplier breakdown
-    React.createElement("div", {
-      style: { padding: 14, background: "linear-gradient(180deg, #1f1a14, #161210)", border: "1px solid #2a1f14", borderRadius: 10, marginBottom: 16, textAlign: "center", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" }
-    },
-      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 2, marginBottom: 8 } }, "MULTIPLIER BREAKDOWN"),
-      React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" } },
-        React.createElement("span", { style: { fontSize: 13, color: "#b84627", fontWeight: 700 } }, rankInfo.mult + " RANK"),
-        React.createElement("span", { style: { color: "#3d2e1e" } }, "\u00D7"),
-        React.createElement("span", { style: { fontSize: 13, color: "#d4a636", fontWeight: 700 } }, "x" + holdTier.mult + " HOLD"),
-        React.createElement("span", { style: { color: "#3d2e1e" } }, "\u00D7"),
-        React.createElement("span", { style: { fontSize: 13, color: "#4caf50", fontWeight: 700 } }, streakMult + " STREAK"),
-        React.createElement("span", { style: { color: "#3d2e1e" } }, "="),
-        React.createElement("span", { style: { fontSize: 16, color: "#f0c040", fontWeight: 700, padding: "2px 10px", background: "rgba(212,166,54,0.08)", borderRadius: 4 } }, "x" + totalMult.toFixed(1))
-      )
-    ),
-    // Token info
-    React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 2, marginBottom: 8 } }, "$RANCH TOKEN"),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 } },
-      StatCard("Price", tokenInfo.price ? "$" + tokenInfo.price.toFixed(6) : "--", "#e8ddd0"),
-      StatCard("Market Cap", tokenInfo.marketCap ? "$" + Number(tokenInfo.marketCap).toLocaleString() : "--", "#e8ddd0"),
-      StatCard("Holders", tokenInfo.holders ? tokenInfo.holders.toLocaleString() : "--", "#e8ddd0")
-    )
-  );
-}
-
 // ─── LEADERBOARD PANEL ───
-function LeaderboardPanel({ leaderboard, lbPeriod, setLbPeriod }) {
-  var podiumColors = ["#f0c040", "#c0c0c0", "#cd7f32"];
-  return React.createElement("div", null,
-    React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 14 } },
-      ["week", "alltime"].map(function(p) {
-        var active = lbPeriod === p;
-        return React.createElement("button", {
-          key: p, onClick: function() { setLbPeriod(p); },
-          style: {
-            flex: 1, padding: "8px 0", border: active ? "1px solid #d4a636" : "1px solid #2a1f14",
-            borderRadius: 6, background: active ? "rgba(212,166,54,0.08)" : "transparent",
-            color: active ? "#f0c040" : "#6d5838",
-            fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 1.5,
-            fontFamily: "'Pixelify Sans', sans-serif",
-          }
-        }, p === "week" ? "THIS WEEK" : "ALL TIME");
-      })
-    ),
-    leaderboard.map(function(r, i) {
-      return React.createElement("div", {
-        key: i,
-        style: {
-          display: "flex", alignItems: "center", padding: "12px 10px",
-          borderBottom: "1px solid rgba(42,31,20,0.4)",
-          background: i < 3 ? "rgba(212,166,54,0.03)" : "transparent",
-        }
-      },
-        React.createElement("div", { style: { width: 30, fontSize: 16, fontWeight: 700, color: i < 3 ? podiumColors[i] : "#6d5838" } }, "#" + r.rank),
-        React.createElement("div", { style: { flex: 1 } },
-          React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "#e8ddd0" } }, r.name),
-          React.createElement("div", { style: { fontSize: 9, color: "#6d5838" } }, r.streak + " day streak")
-        ),
-        React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: "#f0c040", textShadow: "0 1px 2px rgba(0,0,0,0.5)" } }, r.pts.toLocaleString())
-      );
-    })
-  );
-}
-
 // ─── REWARDS PANEL ───
-function RewardsPanel({ usdcEarned, rewards, burns, treasury, tokenInfo }) {
-  return React.createElement("div", null,
-    React.createElement("div", { style: { padding: 16, background: "linear-gradient(135deg, rgba(76,175,80,0.08), rgba(212,166,54,0.08))", border: "1px solid rgba(76,175,80,0.2)", borderRadius: 10, marginBottom: 14, textAlign: "center" } },
-      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 2, marginBottom: 4 } }, "REWARD TREASURY"),
-      React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: "#4caf50", textShadow: "0 0 12px rgba(76,175,80,0.3)" } }, "$" + (treasury && treasury.usdcBalance ? treasury.usdcBalance.toFixed(2) : "0.00") + " USDC"),
-      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", marginTop: 4 } }, "Distributed weekly to eligible holders")
-    ),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 } },
-      React.createElement("div", { style: { padding: 14, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center" } },
-        React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#f0c040" } }, rewards && rewards.pool ? (rewards.pool.today_active_ranchers || 0) : 0),
-        React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1, marginTop: 2 } }, "ACTIVE RANCHERS")
-      ),
-      React.createElement("div", { style: { padding: 14, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center" } },
-        React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#4caf50" } }, "$" + (rewards && rewards.totalEarnedUsdc ? rewards.totalEarnedUsdc.toFixed(2) : usdcEarned.toFixed(2))),
-        React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1, marginTop: 2 } }, "YOUR TOTAL EARNED")
-      )
-    ),
-    // How it works
-    React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 2, marginBottom: 10 } }, "HOW REWARDS WORK"),
-    [
-      { num: "01", title: "EARN POINTS", desc: "Complete daily chores and weekly tasks." },
-      { num: "02", title: "MULTIPLY", desc: "Points multiplied by rank, holdings, and streak." },
-      { num: "03", title: "WEEKLY PAYDAY", desc: "USDC distributed to eligible holders every Monday." },
-    ].map(function(step, i) {
-      return React.createElement("div", {
-        key: i, style: { padding: 12, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 8, marginBottom: 8 }
-      },
-        React.createElement("div", { style: { fontSize: 24, fontWeight: 700, color: "#2a1f14", marginBottom: 4 } }, step.num),
-        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "#e8ddd0", letterSpacing: 1, marginBottom: 4 } }, step.title),
-        React.createElement("div", { style: { fontSize: 10, color: "#9c8e78", lineHeight: 1.5 } }, step.desc)
-      );
-    })
-  );
-}
-
 // ─── RAIDS PANEL ───
-function RaidsPanel({ raidTargets, raidStatus, raidResult, wallet }) {
-  return React.createElement("div", null,
-    React.createElement("div", { style: { padding: 16, background: "linear-gradient(135deg, rgba(184,70,27,0.08), rgba(212,166,54,0.08))", border: "1px solid rgba(184,70,27,0.2)", borderRadius: 10, marginBottom: 14 } },
-      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 2, marginBottom: 4 } }, "RANCH RAIDS"),
-      React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "#b84627", letterSpacing: 2, marginBottom: 8 } }, "PvP RAID SYSTEM"),
-      React.createElement("div", { style: { fontSize: 11, color: "#9c8e78", lineHeight: 1.6 } }, "Hold $RANCH to unlock raids. Win = steal 10% of their daily pts. Lose = forfeit 100 pts. More $RANCH = more raids per day.")
-    ),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 } },
-      React.createElement("div", { style: { padding: 12, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center" } },
-        React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#f0c040" } }, (raidStatus ? raidStatus.raidsToday : 0) + "/" + (raidStatus ? raidStatus.maxRaids : 0)),
-        React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1, marginTop: 2 } }, "RAIDS TODAY")
-      ),
-      React.createElement("div", { style: { padding: 12, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center" } },
-        React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#e8ddd0" } }, "--"),
-        React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1, marginTop: 2 } }, "RAID TIER")
-      ),
-      React.createElement("div", { style: { padding: 12, background: "#1a1510", border: "1px solid #2a1f14", borderRadius: 10, textAlign: "center" } },
-        React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#e8ddd0" } }, "--"),
-        React.createElement("div", { style: { fontSize: 8, color: "#6d5838", letterSpacing: 1, marginTop: 2 } }, "HOLD TIER")
-      )
-    ),
-    React.createElement("div", null,
-      raidTargets && raidTargets.filter(function(t) { return t.wallet !== wallet; }).length > 0
-        ? React.createElement("div", { style: { maxHeight: 300, overflowY: "auto" } },
-            raidTargets.filter(function(t) { return t.wallet !== wallet; }).map(function(t, i) {
-              return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderBottom: "1px solid rgba(42,31,20,0.4)" } },
-                React.createElement("div", null,
-                  React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "#e8ddd0" } }, t.ranch_name || "Unnamed"),
-                  React.createElement("div", { style: { fontSize: 10, color: "#6d5838" } }, (t.today_pts || 0) + " pts today")
-                ),
-                React.createElement("button", {
-                  onClick: function() { window._srDoRaid && window._srDoRaid(t.wallet); },
-                  style: { padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: "pointer", color: "#e8ddd0", background: "linear-gradient(180deg,#8b5e3c,#5c3f24)", boxShadow: "inset 0 1px 0 rgba(180,140,90,.3),0 2px 4px rgba(0,0,0,.3)" }
-                }, "RAID")
-              );
-            })
-          )
-        : React.createElement("div", { style: { padding: 20, textAlign: "center", color: "#6d5838", fontSize: 12 } }, "Hold $RANCH to unlock raids. 50k = 1 raid/day.")
-    )
-  );
-}
-
-
 // --- SPRITE THUMBNAIL PATHS ---
 var SPRITE_BASE = (typeof window !== "undefined" && import.meta.env.BASE_URL || "/dev/") + "sprites/game/";
 var SPRITE_PATHS = {
@@ -798,36 +427,6 @@ function CategoryContent({ cats, placing, onPlace }) {
   );
 }
 
-function ShopContent() {
-  var items = [
-    { name: "Vitamin Pack", cost: "5k", desc: "+50% health one pen" },
-    { name: "Super Feed", cost: "15k", desc: "Full heal one pen" },
-    { name: "Vet Visit", cost: "50k", desc: "Full heal ALL" },
-    { name: "Growth Hormone", cost: "25k", desc: "2x pts 24h" },
-    { name: "Fence Upgrade", cost: "100k", desc: "Half decay 7d" },
-  ];
-  return React.createElement("div", { style: { display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6 } },
-    items.map(function(item, i) {
-      return React.createElement("div", {
-        key: i,
-        style: {
-          minWidth: 100, padding: "12px 8px", borderRadius: 12, textAlign: "center",
-          background: "linear-gradient(180deg, rgba(31,26,20,0.92), rgba(22,18,16,0.92))",
-          border: "2px solid #2a1f14", boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-          backdropFilter: "blur(8px)", flexShrink: 0,
-        }
-      },
-        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: "#e8ddd0", marginBottom: 4 } }, item.name),
-        React.createElement("div", { style: { fontSize: 9, color: "#9c8e78", marginBottom: 8, lineHeight: 1.3 } }, item.desc),
-        React.createElement("div", {
-          style: { display: "inline-block", padding: "3px 10px", borderRadius: 10, background: "linear-gradient(180deg, #5a4210, #3d2e1e)", border: "1px solid #8b6914" }
-        }, React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: "#f0c040" } }, item.cost + " $R"))
-      );
-    })
-  );
-}
-
-
 function ShopPanel({ shopItems }) {
   var cats = ["buildings","animals","crops","machines","decorations"];
   var catLabels = { buildings: "BLDG", animals: "PETS", crops: "CROP", machines: "MACH", decorations: "DECO" };
@@ -921,40 +520,8 @@ export default function FarmView() {
   var [isNewRancher, setIsNewRancher] = useState(false);
   var [loading, setLoading] = useState(false);
   var [toast, setToast] = useState(null);
-  var [menuOpen, setMenuOpen] = useState(null);
   var [shopItems, setShopItems] = useState(null);
   var [farmData, setFarmData] = useState(null);
-  var [rewards, setRewards] = useState({ pool: null, payouts: [], totalEarnedUsdc: 0 });
-  var [burns, setBurns] = useState([]);
-  var [treasury, setTreasury] = useState({ usdcBalance: 0 });
-  var [raidTargets, setRaidTargets] = useState([]);
-  var [raidStatus, setRaidStatus] = useState({ raidsToday: 0, maxRaids: 0, recentRaids: [], raidedBy: [], hasShield: false });
-  var [raidResult, setRaidResult] = useState(null);
-  var [bounty, setBounty] = useState(null);
-  var [countdown, setCountdown] = useState("");
-  var [streakDays, setStreakDays] = useState(0);
-  var [lifetimePts, setLifetimePts] = useState(0);
-  var [usdcEarned, setUsdcEarned] = useState(0);
-  var [holdTier, setHoldTier] = useState({ name: "Drifter", mult: 1 });
-  var [rankInfo, setRankInfo] = useState({ name: "Homestead", mult: "1x", level: 1 });
-  var [tokenInfo, setTokenInfo] = useState({ price: null, marketCap: null, holders: null });
-  var [taskStates, setTaskStates] = useState({ checkin: false, social: false, water: false, patrol: false, evening: false, brand: false });
-  var [pens, setPens] = useState([
-    { type: "cattle", name: "Cattle Ranch", icon: "\uD83D\uDC04", unlocked: true, health: 85, minBalance: 0 },
-    { type: "chicken", name: "Chicken Coop", icon: "\uD83D\uDC14", unlocked: true, health: 70, minBalance: 50000 },
-    { type: "horse", name: "Horse Stable", icon: "\uD83D\uDC0E", unlocked: false, health: 0, minBalance: 500000 },
-    { type: "sheep", name: "Sheep Pen", icon: "\uD83D\uDC11", unlocked: false, health: 0, minBalance: 1000000 },
-    { type: "pig", name: "Pig Sty", icon: "\uD83D\uDC37", unlocked: false, health: 0, minBalance: 10000000 },
-  ]);
-  var [currentPen, setCurrentPen] = useState(0);
-  var [leaderboard, setLeaderboard] = useState([
-    { rank: 1, name: "Dusty Trails", pts: 12500, streak: 14 },
-    { rank: 2, name: "Big Sky Ranch", pts: 9800, streak: 7 },
-    { rank: 3, name: "Lone Star", pts: 8200, streak: 21 },
-    { rank: 4, name: "Prairie Wind", pts: 6100, streak: 5 },
-    { rank: 5, name: "Canyon Creek", pts: 4800, streak: 3 },
-  ]);
-  var [lbPeriod, setLbPeriod] = useState("week");
   var placingRef = useRef(null);
   var placedRef = useRef([]);
   var unlockedRef = useRef(new Set(START_CHUNKS));
@@ -995,58 +562,12 @@ export default function FarmView() {
     api("/ranchers/" + w + "/stats").then(function(data) {
       if (data && !data.error) {
         setPoints(data.today_points ? data.today_points.total_pts || 0 : 0);
-        setLifetimePts(data.lifetime_pts || 0);
-        setStreakDays(data.current_streak || 0);
-        setUsdcEarned(data.total_earned_usdc || 0);
       }
-    });
-    // Tasks
-    api("/points/" + w + "/tasks").then(function(data) {
-      if (data && data.daily) {
-        setTaskStates({
-          checkin: data.daily.checkin || false,
-          social: data.daily.social || false,
-          water: data.daily.water || false,
-          patrol: data.daily.patrol || false,
-          evening: false,
-          brand: data.weekly ? data.weekly.brand || false : false,
-        });
-      }
-    });
-    // Tiers
-    api("/tiers/" + w).then(function(data) {
-      if (data && data.tier) setHoldTier(data.tier);
-    });
-    // Token info
-    api("/token").then(function(data) {
-      if (data) setTokenInfo(data);
-    });
-    // Pens
-    api("/pens/" + w).then(function(data) {
-      if (data && data.pens) setPens(data.pens);
-    });
-    // Treasury
-    api("/token/treasury").then(function(data) { if (data) setTreasury(data); });
-    // Bounty
-    api("/engage/bounty/today?wallet=" + w).then(function(data) { if (data) setBounty(data); });
-    // Rewards
-    Promise.all([api("/rewards/pool"), api("/rewards/" + w), api("/rewards/burns")]).then(function(res) {
-      setRewards({ pool: res[0], today: res[1] ? res[1].today : null, totalEarnedUsdc: res[1] ? res[1].totalEarnedUsdc || 0 : 0, payouts: res[1] ? res[1].payouts || [] : [] });
-      if (res[2] && res[2].burns) setBurns(res[2].burns);
-    });
-    // Raids
-    Promise.all([api("/raids/targets/list"), api("/raids/" + w + "/status")]).then(function(res) {
-      if (res[0] && res[0].targets) setRaidTargets(res[0].targets);
-      if (res[1]) setRaidStatus(res[1]);
     });
     // Shop items
     api("/farm/shop/items").then(function(data) { if (data) setShopItems(data); });
     // Farm state
     api("/farm/" + w).then(function(data) { if (data) setFarmData(data); });
-    // Leaderboard
-    api("/leaderboard?period=week&limit=25").then(function(data) {
-      if (data && data.leaderboard) setLeaderboard(data.leaderboard);
-    });
   }
 
   function saveRanchName(name) {
@@ -1071,52 +592,6 @@ export default function FarmView() {
   }
 
   // Task API functions (exposed on window for TasksPanel)
-  function doTask(endpoint, taskKey, msg) {
-    if (!wallet || loading) return;
-    setLoading(true);
-    api(endpoint, { method: "POST", body: JSON.stringify({ wallet: wallet }) }).then(function(data) {
-      setLoading(false);
-      if (!data) { showToastMsg("Failed", "error"); return; }
-      if (data.alreadyDone) { showToastMsg("Already done!"); setTaskStates(function(s) { var n = Object.assign({}, s); n[taskKey] = true; return n; }); return; }
-      if (data.pointsEarned) { showToastMsg("+" + data.pointsEarned + " pts - " + msg); setTaskStates(function(s) { var n = Object.assign({}, s); n[taskKey] = true; return n; }); fetchAllData(wallet); }
-      if (data.error) showToastMsg(data.error, "error");
-    });
-  }
-  window._srDoCheckin = function() { doTask("/points/checkin", "checkin", "Cattle fed!"); };
-  window._srDoWater = function() { doTask("/points/water", "water", "Cattle watered!"); };
-  window._srDoPatrol = function() { doTask("/points/patrol", "patrol", "Fences secure!"); };
-  window._srDoBrand = function() { doTask("/points/brand", "brand", "Livestock branded!"); };
-  window._srDoSocial = function() {
-    if (!wallet) return;
-    window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Working the ranch at @Solranchfarm\n\nStake your claim. Earn weekly USDC rewards.\n\n#SOLRANCH #Solana"), "_blank");
-    setTimeout(function() {
-      api("/points/social", { method: "POST", body: JSON.stringify({ wallet: wallet, postUrl: "https://twitter.com/user/status/" + Date.now() }) }).then(function(data) {
-        if (data && data.pointsEarned) { showToastMsg("+" + data.pointsEarned + " pts - Fences repaired!"); fetchAllData(wallet); }
-        setTaskStates(function(s) { return Object.assign({}, s, { social: true }); });
-      });
-    }, 2000);
-  };
-  window._srDoRaid = function(targetWallet) {
-    if (!wallet || loading) return;
-    setLoading(true);
-    api("/raids/attack", { method: "POST", body: JSON.stringify({ wallet: wallet, targetWallet: targetWallet }) }).then(function(data) {
-      setLoading(false);
-      if (!data) return;
-      if (data.error) { showToastMsg(data.error, "error"); return; }
-      setRaidResult(data);
-      showToastMsg(data.message, data.success ? "success" : "error");
-      fetchAllData(wallet);
-    });
-  };
-  window._srClaimBounty = function() {
-    if (!wallet) return;
-    api("/engage/bounty/claim", { method: "POST", body: JSON.stringify({ wallet: wallet }) }).then(function(data) {
-      if (!data) return;
-      if (data.alreadyDone) { showToastMsg("Already claimed!", "error"); return; }
-      if (data.error) { showToastMsg(data.error, "error"); return; }
-      if (data.pointsEarned) { showToastMsg("+" + data.pointsEarned + " pts - Bounty claimed!"); fetchAllData(wallet); }
-    });
-  };
   window._srDoFeedAnimals = function() {
     if (!wallet || loading) return;
     setLoading(true);
@@ -1127,30 +602,7 @@ export default function FarmView() {
       if (data.success) { showToastMsg("All animals fed! They earn points today."); fetchAllData(wallet); }
     });
   };
-  window._srDoEvening = function() {
-    if (!wallet || loading) return;
-    setLoading(true);
-    api("/engage/evening-feed", { method: "POST", body: JSON.stringify({ wallet: wallet }) }).then(function(data) {
-      setLoading(false);
-      if (!data) return;
-      if (data.alreadyDone) { showToastMsg("Already done!", "error"); return; }
-      if (data.error) { showToastMsg(data.error, "error"); return; }
-      if (data.pointsEarned) { showToastMsg("+" + data.pointsEarned + " pts - Evening feed!"); setTaskStates(function(s) { return Object.assign({}, s, { evening: true }); }); fetchAllData(wallet); }
-    });
-  };
 
-  // Countdown timer
-  useEffect(function() {
-    function tick() {
-      var now = new Date();
-      var h = now.getUTCHours(), m = now.getUTCMinutes(), s = now.getUTCSeconds();
-      var left = ((23-h)*3600) + ((59-m)*60) + (60-s);
-      setCountdown(String(Math.floor(left/3600)).padStart(2,"0") + ":" + String(Math.floor((left%3600)/60)).padStart(2,"0") + ":" + String(left%60).padStart(2,"0"));
-    }
-    tick();
-    var iv = setInterval(tick, 1000);
-    return function() { clearInterval(iv); };
-  }, []);
 
   // Auto-login from localStorage
   useEffect(function() {
@@ -1951,15 +1403,15 @@ export default function FarmView() {
       ),
 
       // ═══ BOTTOM SECTION ═══
-      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20, paddingBottom: 20 } },
+      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20, paddingBottom: 0 } },
 
         // ── Item Panel (slides up) ──
       // ═══ PANELS ═══
         panel && React.createElement("div", {
-          style: { position: "absolute", bottom: 90, left: 0, right: 0, zIndex: 8, padding: "4px 8px", maxHeight: "55vh", overflowY: "auto", background: "transparent" }
+          style: { position: "absolute", bottom: 140, left: 0, right: 0, zIndex: 8, padding: "4px 8px", maxHeight: "55vh", overflowY: "auto", background: "transparent" }
         },
           // SHOP
-          panel === "shop" && shopItems && React.createElement(ShopPanel, { shopItems: shopItems })
+          panel === "shop" && shopItems && React.createElement(ShopPanel, { shopItems: shopItems }),
 
           // BAG
           panel === "bag" && React.createElement("div", {
@@ -2051,7 +1503,7 @@ export default function FarmView() {
         React.createElement("div", {
           style: {
             display: "flex", justifyContent: "space-evenly", alignItems: "center",
-            padding: "8px 6px 12px",
+            padding: "10px 6px 64px",
             background: "linear-gradient(180deg, rgba(26,21,16,0.95), rgba(14,11,8,0.98))",
             borderTop: "2px solid #3d2e1e",
           }
@@ -2104,13 +1556,6 @@ export default function FarmView() {
         }
       }, toast.message),
 
-      menuOpen && wallet && React.createElement(MenuOverlay, {
-        tab: menuOpen, setTab: setMenuOpen, onClose: function() { setMenuOpen(null); },
-        taskStates: taskStates, pens: pens, currentPen: currentPen, setCurrentPen: setCurrentPen,
-        leaderboard: leaderboard, lbPeriod: lbPeriod, setLbPeriod: setLbPeriod,
-        streakDays: streakDays, lifetimePts: lifetimePts, usdcEarned: usdcEarned,
-        holdTier: holdTier, rankInfo: rankInfo, tokenInfo: tokenInfo, points: points,
-      })
 
       )
     )
