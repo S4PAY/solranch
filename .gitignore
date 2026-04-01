@@ -19,3 +19,12 @@ fix-*.js
 fix-*.sh
 add-*.js
 setup-*.sh
+# Root loose files (served by nginx, not needed in repo)
+/FarmView.jsx
+/ASSET-MAP.md
+/beta.html
+/docs.html
+/index.html
+/privacy.html
+/favicon.ico
+/package.json
