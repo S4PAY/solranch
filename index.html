@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta property="og:title" content="Sol Ranch - The First Virtual Ranch for Degens">
+    <meta property="og:description" content="Build your ranch on Solana. Earn points, hold $RANCH, get weekly USDC rewards from real trading volume. Sell = forfeit.">
+    <meta property="og:image" content="https://solranch.farm/img/mascot.png">
+    <meta property="og:url" content="https://solranch.farm">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@Solranchfarm">
+    <meta name="twitter:title" content="Sol Ranch - Virtual Ranch for Degens">
+    <meta name="twitter:description" content="Build your ranch on Solana. Earn points, hold $RANCH, get weekly USDC rewards. Sellers forfeit their share.">
+    <meta name="twitter:image" content="https://solranch.farm/img/mascot.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOL RANCH - The First Virtual Ranch for Degens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0a0806;
+  --night:#110e0a;
+  --bark:#1a150f;
+  --leather:#2a1f14;
+  --dust:#8b7355;
+  --sand:#c4a882;
+  --cream:#e8dcc8;
+  --gold:#d4a636;
+  --bright-gold:#f0c040;
+  --rust:#b8461b;
+  --ember:#d4581e;
+  --sage:#3d5a3a;
+  --bone:#f5efe6;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  background:var(--black);
+  color:var(--cream);
+  font-family:'IBM Plex Mono',monospace;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* -- GRAIN OVERLAY -- */
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* -- SCROLLBAR -- */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--black)}
+::-webkit-scrollbar-thumb{background:var(--leather);border-radius:3px}
+
+/* -- NAV -- */
+nav{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:1.5rem 3rem;
+  background:linear-gradient(180deg,rgba(10,8,6,0.95) 0%,rgba(10,8,6,0) 100%);
+  backdrop-filter:blur(4px);
+}
+.nav-brand{
+  font-family:'Rye',serif;
+  font-size:1.1rem;
+  color:var(--gold);
+  letter-spacing:0.08em;
+  text-decoration:none;
+}
+.nav-brand span{color:var(--cream);font-size:0.7rem;opacity:0.5;margin-left:0.5rem;font-family:'IBM Plex Mono',monospace;letter-spacing:0.2em;text-transform:uppercase}
+.nav-links{display:flex;gap:2.5rem;align-items:center;list-style:none}
+.nav-links a{
+  color:var(--dust);
+  text-decoration:none;
+  font-size:0.7rem;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  transition:color 0.3s;
+}
+.nav-links a:hover{color:var(--bright-gold)}
+.btn-wallet{
+  background:none;
+  border:1px solid var(--dust);
+  color:var(--cream);
+  padding:0.6rem 1.6rem;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.85rem;
+  letter-spacing:0.18em;
+  cursor:pointer;
+  transition:all 0.3s;
+  position:relative;
+  overflow:hidden;
+}
+.btn-wallet::before{
+  content:'';
+  position:absolute;inset:0;
+  background:var(--gold);
+  transform:translateX(-101%);
+  transition:transform 0.4s cubic-bezier(0.65,0,0.35,1);
+  z-index:0;
+}
+.btn-wallet:hover::before{transform:translateX(0)}
+.btn-wallet:hover{border-color:var(--gold);color:var(--black)}
+.btn-wallet span{position:relative;z-index:1}
+
+/* -- HERO -- */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  position:relative;
+  padding:2rem;
+  background:
+    radial-gradient(ellipse 70% 35% at 50% 100%,rgba(184,70,27,0.08) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 30% at 20% 85%,rgba(212,166,54,0.04) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 30% at 80% 85%,rgba(212,166,54,0.04) 0%,transparent 60%),
+    var(--black);
+}
+
+/* Stars */
+.stars-canvas{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.star{
+  position:absolute;
+  width:1px;height:1px;
+  background:var(--bone);
+  border-radius:50%;
+  opacity:0;
+  animation:starPulse 4s infinite;
+}
+@keyframes starPulse{
+  0%,100%{opacity:0.1}
+  50%{opacity:0.6}
+}
+
+/* Horizon */
+.horizon{
+  position:absolute;
+  bottom:15%;left:0;width:100%;
+  height:1px;
+  background:linear-gradient(90deg,transparent 5%,var(--leather) 25%,var(--dust) 50%,var(--leather) 75%,transparent 95%);
+  opacity:0.25;
+}
+.horizon::after{
+  content:'';
+  position:absolute;
+  bottom:0;left:0;width:100%;
+  height:80px;
+  background:linear-gradient(0deg,rgba(26,21,15,0.5) 0%,transparent 100%);
+}
+
+/* Ground */
+.ground{
+  position:absolute;
+  bottom:0;left:0;width:100%;
+  height:15%;
+  background:linear-gradient(180deg,transparent 0%,rgba(26,21,15,0.3) 30%,rgba(26,21,15,0.6) 100%);
+}
+
+.hero-content{
+  position:relative;z-index:10;
+  max-width:850px;
+}
+
+.hero-tag{
+  font-size:0.6rem;
+  letter-spacing:0.4em;
+  text-transform:uppercase;
+  color:var(--dust);
+  margin-bottom:2rem;
+  opacity:0;
+  animation:fadeUp 0.8s ease-out 0.2s forwards;
+}
+.hero-tag .sep{margin:0 0.8rem;color:var(--rust)}
+
+h1{
+  font-family:'Rye',serif;
+  font-size:clamp(3rem,9vw,7.5rem);
+  line-height:0.9;
+  color:var(--bone);
+  text-shadow:0 3px 0 rgba(26,21,15,0.8),0 0 60px rgba(212,166,54,0.06);
+  margin-bottom:0.5em;
+  opacity:0;
+  animation:fadeUp 0.8s ease-out 0.4s forwards;
+}
+h1 .accent{color:var(--gold)}
+
+.hero-sub{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1rem,2.5vw,1.6rem);
+  letter-spacing:0.2em;
+  color:var(--dust);
+  margin-bottom:2.5rem;
+  opacity:0;
+  animation:fadeUp 0.8s ease-out 0.6s forwards;
+}
+
+.hero-desc{
+  font-size:0.8rem;
+  line-height:1.9;
+  color:var(--sand);
+  max-width:520px;
+  margin:0 auto 3rem;
+  opacity:0.6;
+  opacity:0;
+  animation:fadeUp 0.8s ease-out 0.8s forwards;
+}
+
+.hero-actions{
+  display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+  opacity:0;
+  animation:fadeUp 0.8s ease-out 1s forwards;
+}
+
+.btn-primary{
+  background:var(--gold);
+  color:var(--black);
+  border:none;
+  padding:1rem 2.8rem;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.95rem;
+  letter-spacing:0.18em;
+  cursor:pointer;
+  transition:all 0.3s;
+  position:relative;
+}
+.btn-primary:hover{
+  background:var(--bright-gold);
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(212,166,54,0.2);
+}
+
+.btn-ghost{
+  background:none;
+  border:1px solid rgba(139,115,85,0.3);
+  color:var(--sand);
+  padding:1rem 2.8rem;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.95rem;
+  letter-spacing:0.18em;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.btn-ghost:hover{
+  border-color:var(--gold);
+  color:var(--gold);
+  transform:translateY(-2px);
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(25px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* -- TICKER BAR -- */
+.ticker{
+  border-top:1px solid rgba(139,115,85,0.1);
+  border-bottom:1px solid rgba(139,115,85,0.1);
+  background:var(--night);
+  padding:1.8rem 3rem;
+  display:flex;justify-content:center;gap:4rem;flex-wrap:wrap;
+}
+.tick{text-align:center}
+.tick-val{
+  font-family:'Rye',serif;
+  font-size:1.6rem;
+  color:var(--gold);
+  display:block;
+}
+.tick-label{
+  font-size:0.6rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--dust);
+  margin-top:0.3rem;
+}
+
+/* -- SECTIONS -- */
+.section{
+  padding:7rem 3rem;
+  max-width:1050px;
+  margin:0 auto;
+}
+.section-label{
+  font-size:0.6rem;
+  letter-spacing:0.35em;
+  text-transform:uppercase;
+  color:var(--rust);
+  margin-bottom:1rem;
+  display:flex;align-items:center;gap:0.8rem;
+}
+.section-label::before{
+  content:'';
+  width:30px;height:1px;
+  background:var(--rust);
+}
+h2{
+  font-family:'Rye',serif;
+  font-size:clamp(1.8rem,4vw,3rem);
+  color:var(--bone);
+  margin-bottom:1rem;
+  text-shadow:0 2px 0 rgba(26,21,15,0.6);
+}
+.section-intro{
+  font-size:0.8rem;
+  color:var(--dust);
+  line-height:1.8;
+  max-width:550px;
+  margin-bottom:3.5rem;
+}
+
+/* -- HOW IT WORKS CARDS -- */
+.how-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;
+}
+.how-card{
+  background:linear-gradient(160deg,rgba(42,31,20,0.4) 0%,rgba(17,14,10,0.9) 100%);
+  border:1px solid rgba(139,115,85,0.08);
+  padding:2.5rem 2rem;
+  position:relative;
+  transition:all 0.4s;
+}
+.how-card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:100%;height:2px;
+  background:linear-gradient(90deg,var(--rust),var(--gold));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.5s cubic-bezier(0.65,0,0.35,1);
+}
+.how-card:hover::before{transform:scaleX(1)}
+.how-card:hover{
+  border-color:rgba(139,115,85,0.2);
+  transform:translateY(-4px);
+}
+.how-step{
+  font-family:'Rye',serif;
+  font-size:2.5rem;
+  color:var(--rust);
+  opacity:0.25;
+  line-height:1;
+  margin-bottom:1.2rem;
+}
+.how-card h3{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.3rem;
+  letter-spacing:0.1em;
+  color:var(--cream);
+  margin-bottom:0.8rem;
+}
+.how-card p{
+  font-size:0.78rem;
+  line-height:1.8;
+  color:var(--dust);
+}
+
+/* -- EARN SECTION -- */
+.earn-section{
+  background:linear-gradient(180deg,var(--black) 0%,rgba(26,21,15,0.3) 50%,var(--black) 100%);
+  padding:7rem 3rem;
+}
+.earn-inner{max-width:900px;margin:0 auto}
+
+.earn-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:2.5rem;
+}
+.earn-table thead th{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.75rem;
+  letter-spacing:0.2em;
+  color:var(--gold);
+  text-align:left;
+  padding:1rem 1.5rem;
+  border-bottom:1px solid rgba(139,115,85,0.15);
+}
+.earn-table tbody td{
+  padding:1rem 1.5rem;
+  border-bottom:1px solid rgba(139,115,85,0.06);
+  font-size:0.8rem;
+  color:var(--sand);
+  vertical-align:middle;
+}
+.earn-table tbody tr{transition:background 0.2s}
+.earn-table tbody tr:hover td{background:rgba(212,166,54,0.02)}
+.earn-table .activity{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1rem;
+  letter-spacing:0.08em;
+  color:var(--cream);
+}
+.earn-table .pts{
+  font-family:'Rye',serif;
+  font-size:1.1rem;
+  color:var(--bright-gold);
+}
+.earn-table .desc{
+  color:var(--dust);
+  font-size:0.75rem;
+}
+
+/* -- RANKS -- */
+.ranks-section{
+  padding:7rem 3rem;
+  max-width:1050px;
+  margin:0 auto;
+}
+.ranks-track{
+  display:flex;
+  gap:0;
+  margin-top:3rem;
+  position:relative;
+}
+.ranks-track::before{
+  content:'';
+  position:absolute;
+  top:50%;left:0;
+  width:100%;height:1px;
+  background:linear-gradient(90deg,var(--leather),var(--gold),var(--leather));
+  opacity:0.2;
+  transform:translateY(-50%);
+}
+.rank-card{
+  flex:1;
+  text-align:center;
+  padding:2.5rem 0.5rem;
+  position:relative;
+  border:1px solid rgba(139,115,85,0.06);
+  background:rgba(17,14,10,0.6);
+  transition:all 0.4s;
+}
+.rank-card:hover{
+  background:rgba(42,31,20,0.4);
+  border-color:rgba(212,166,54,0.15);
+  transform:translateY(-6px);
+}
+.rank-icon{
+  font-family:'Rye',serif;
+  font-size:1.8rem;
+  color:var(--dust);
+  margin-bottom:0.8rem;
+  display:block;
+  opacity:0.4;
+}
+.rank-card:last-child .rank-icon{color:var(--bright-gold);opacity:1}
+.rank-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1rem;
+  letter-spacing:0.12em;
+  color:var(--cream);
+  margin-bottom:0.4rem;
+}
+.rank-mult{
+  font-family:'Rye',serif;
+  font-size:1.8rem;
+  color:var(--gold);
+}
+.rank-req{
+  font-size:0.6rem;
+  color:var(--dust);
+  letter-spacing:0.1em;
+  margin-top:0.3rem;
+}
+
+/* -- REWARDS FLOW -- */
+.flow-section{
+  background:var(--night);
+  border-top:1px solid rgba(139,115,85,0.08);
+  border-bottom:1px solid rgba(139,115,85,0.08);
+  padding:5rem 3rem;
+}
+.flow-inner{
+  max-width:800px;
+  margin:0 auto;
+  text-align:center;
+}
+.flow-chain{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  margin-top:3rem;
+  flex-wrap:wrap;
+}
+.flow-node{
+  background:var(--leather);
+  border:1px solid rgba(139,115,85,0.15);
+  padding:1.2rem 1.8rem;
+  text-align:center;
+  min-width:160px;
+}
+.flow-node .flow-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.85rem;
+  letter-spacing:0.15em;
+  color:var(--gold);
+  margin-bottom:0.3rem;
+}
+.flow-node .flow-desc{
+  font-size:0.65rem;
+  color:var(--dust);
+  line-height:1.5;
+}
+.flow-arrow{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--rust);
+  font-size:1.2rem;
+  padding:0 0.5rem;
+  opacity:0.5;
+}
+
+/* -- CTA / EARLY ACCESS -- */
+.cta{
+  padding:10rem 3rem;
+  text-align:center;
+  position:relative;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 70%,rgba(184,70,27,0.06) 0%,transparent 70%),
+    var(--black);
+}
+.cta h2{
+  font-size:clamp(2.2rem,6vw,4.5rem);
+  margin-bottom:1.2rem;
+}
+.cta p{
+  color:var(--dust);
+  font-size:0.85rem;
+  max-width:450px;
+  margin:0 auto 3rem;
+  line-height:1.8;
+}
+.email-row{
+  display:flex;
+  gap:0;
+  max-width:460px;
+  margin:0 auto;
+}
+.email-row input{
+  flex:1;
+  background:rgba(42,31,20,0.5);
+  border:1px solid rgba(139,115,85,0.2);
+  border-right:none;
+  padding:1rem 1.5rem;
+  color:var(--cream);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.8rem;
+  outline:none;
+  transition:border-color 0.3s;
+}
+.email-row input::placeholder{color:var(--dust);opacity:0.5}
+.email-row input:focus{border-color:var(--gold)}
+.email-row button{
+  background:var(--gold);
+  color:var(--black);
+  border:1px solid var(--gold);
+  padding:1rem 2rem;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.85rem;
+  letter-spacing:0.15em;
+  cursor:pointer;
+  transition:all 0.3s;
+  white-space:nowrap;
+}
+.email-row button:hover{
+  background:var(--bright-gold);
+  border-color:var(--bright-gold);
+}
+.cta-note{
+  font-size:0.6rem;
+  color:var(--dust);
+  opacity:0.4;
+  margin-top:1.2rem;
+  letter-spacing:0.1em;
+}
+
+/* -- FOOTER -- */
+footer{
+  border-top:1px solid rgba(139,115,85,0.08);
+  padding:3rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:1rem;
+}
+.footer-brand{
+  font-family:'Rye',serif;
+  font-size:0.9rem;
+  color:var(--dust);
+}
+.footer-links{
+  display:flex;gap:2rem;list-style:none;
+}
+.footer-links a{
+  color:var(--dust);
+  text-decoration:none;
+  font-size:0.65rem;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  opacity:0.5;
+  transition:opacity 0.3s;
+}
+.footer-links a:hover{opacity:1;color:var(--gold)}
+.footer-copy{
+  font-size:0.6rem;
+  color:var(--dust);
+  opacity:0.3;
+}
+
+/* -- RESPONSIVE -- */
+@media(max-width:768px){
+  nav{padding:1rem 1.5rem}
+  .nav-links{display:none}
+  .section,.earn-section,.ranks-section{padding:4rem 1.5rem}
+  .ticker{gap:2rem;padding:1.5rem}
+  .ranks-track{flex-direction:column;gap:0.5rem}
+  .ranks-track::before{display:none}
+  .flow-chain{flex-direction:column}
+  .flow-arrow{transform:rotate(90deg)}
+  .email-row{flex-direction:column}
+  .email-row input{border-right:1px solid rgba(139,115,85,0.2);border-bottom:none}
+  footer{flex-direction:column;text-align:center}
+  .cta{padding:6rem 1.5rem}
+  h1{font-size:clamp(2.5rem,12vw,4rem)}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-brand">SOL RANCH <span>on Solana</span></a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#earn">Earn</a></li>
+    <li><a href="#ranks">Ranks</a></li>
+    <li><a href="#rewards">Rewards</a></li>
+  </ul>
+  <a href="/app/" class="btn-wallet" style="text-decoration:none"><span>Enter the Ranch</span></a>
+</nav>
+
+<!-- ========= HERO ========= -->
+<section class="hero">
+  <div class="stars-canvas" id="stars"></div>
+  <div class="horizon"></div>
+  <div class="ground"></div>
+
+  <div class="hero-content">
+    <p class="hero-tag">Built on Solana <span class="sep">/</span> Powered by $RANCH <span class="sep">/</span> Frontier 2026</p>
+    <img src="/img/mascot-256.png" alt="Sol Ranch" style="width:160px;height:160px;image-rendering:pixelated;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;">
+    <h1>SOL<br><span class="accent">RANCH</span></h1>
+    <p class="hero-sub">The First Virtual Ranch for Degens</p>
+    <p class="hero-desc">
+      Stake your claim. Earn weekly USDC rewards from real trading volume.
+      Hold $RANCH, complete tasks, get paid every Monday.
+      Sell during the week and your rewards go to diamond hands.
+    </p>
+    <div class="hero-actions">
+      <a href="/app/" class="btn-primary" style="text-decoration:none;display:inline-block">ENTER THE RANCH</a>
+      <a href="#how" class="btn-ghost" style="text-decoration:none;display:inline-block">READ THE DOCS</a>
+    </div>
+  </div>
+</section>
+
+<!-- ========= TICKER ========= -->
+<div class="ticker">
+  <div class="tick">
+    <span class="tick-val" id="tick-paid">--</span>
+    <span class="tick-label">USDC Paid Out</span>
+  </div>
+  <div class="tick">
+    <span class="tick-val" id="tick-ranchers">--</span>
+    <span class="tick-label">Total Ranchers</span>
+  </div>
+  <div class="tick">
+    <span class="tick-val" id="tick-burned">--</span>
+    <span class="tick-label">$RANCH Burned</span>
+  </div>
+  <div class="tick">
+    <span class="tick-val" id="tick-treasury">--</span>
+    <span class="tick-label">Treasury USDC</span>
+  </div>
+</div>
+
+<!-- ========= HOW IT WORKS ========= -->
+<section class="section" id="how">
+  <div class="section-label">The Trail</div>
+  <h2>How It Works</h2>
+  <p class="section-intro">
+    $RANCH trades on Pump.fun. Every trade generates creator fees.
+    Those fees fund weekly USDC rewards for ranchers who hold $RANCH and grind daily tasks. 30% of fees buy and burn $RANCH.
+  </p>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-step">01</div>
+      <h3>PASTE YOUR WALLET</h3>
+      <p>Paste your Solana wallet address. Your ranch is created instantly. No wallet connection, no minting fees, no gas. Your keys stay safe.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-step">02</div>
+      <h3>WORK YOUR RANCH</h3>
+      <p>Hold at least 50k $RANCH and complete daily tasks. Feed cattle, repair fences, raid other ranches. Points accumulate all week toward your Monday payday.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-step">03</div>
+      <h3>EARN WEEKLY USDC</h3>
+      <p>Every Monday, the full USDC treasury is distributed to eligible holders based on weekly points. Sell your $RANCH during the week? Rewards forfeited and redistributed to diamond hands.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-step">04</div>
+      <h3>CLIMB THE RANKS</h3>
+      <p>As your lifetime points grow, your ranch levels up. Higher ranks mean bigger multipliers on everything you earn. Cattle Barons earn 3x.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========= EARN TABLE ========= -->
+<section class="earn-section" id="earn">
+  <div class="earn-inner">
+    <div class="section-label">Daily Grind</div>
+    <h2>Ways to Earn</h2>
+    <p class="section-intro">Every action on your ranch earns points. Points determine your share of the weekly USDC reward pool. Must hold 50k+ $RANCH all week to qualify.</p>
+
+    <table class="earn-table">
+      <thead>
+        <tr>
+          <th>Activity</th>
+          <th>Ranch Action</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="activity">DAILY CHECK-IN</td>
+          <td class="desc">Feed your cattle once per day</td>
+          <td class="pts">10</td>
+        </tr>
+        <tr>
+          <td class="activity">HOLD $RANCH</td>
+          <td class="desc">Daily snapshot of wallet balance, tiered</td>
+          <td class="pts">10-150</td>
+        </tr>
+        <tr>
+          <td class="activity">SOCIAL TASK</td>
+          <td class="desc">Repair Fences -- share on X, submit link</td>
+          <td class="pts">30</td>
+        </tr>
+        <tr>
+          <td class="activity">BUY $RANCH</td>
+          <td class="desc">On-chain buy detected via Helius</td>
+          <td class="pts">50</td>
+        </tr>
+        <tr>
+          <td class="activity">REFERRAL</td>
+          <td class="desc">Sell at Auction -- bring a new rancher</td>
+          <td class="pts">100</td>
+        </tr>
+        <tr>
+          <td class="activity">WEEKLY RODEO</td>
+          <td class="desc">Prediction games, quizzes, competitions</td>
+          <td class="pts">Variable</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:0.7rem;color:var(--dust);margin-top:2rem;opacity:0.5">
+      Streak bonuses: 7 consecutive days = 2x multiplier. 30 consecutive days = 3x multiplier. Miss a day, streak resets.
+    </p>
+  </div>
+</section>
+
+<!-- ========= RANKS ========= -->
+<section class="ranks-section" id="ranks">
+  <div class="section-label">Ranch Levels</div>
+  <h2>Rise Through the Ranks</h2>
+  <p class="section-intro">Your lifetime points determine your ranch level. Each level multiplies all points earned. The grind is the game.</p>
+
+  <div class="ranks-track">
+    <div class="rank-card">
+      <span class="rank-icon">I</span>
+      <div class="rank-name">HOMESTEAD</div>
+      <div class="rank-mult">1x</div>
+      <div class="rank-req">0 pts</div>
+    </div>
+    <div class="rank-card">
+      <span class="rank-icon">II</span>
+      <div class="rank-name">SMALLHOLD</div>
+      <div class="rank-mult">1.25x</div>
+      <div class="rank-req">1,000 pts</div>
+    </div>
+    <div class="rank-card">
+      <span class="rank-icon">III</span>
+      <div class="rank-name">SPREAD</div>
+      <div class="rank-mult">1.5x</div>
+      <div class="rank-req">5,000 pts</div>
+    </div>
+    <div class="rank-card">
+      <span class="rank-icon">IV</span>
+      <div class="rank-name">ESTATE</div>
+      <div class="rank-mult">2x</div>
+      <div class="rank-req">25,000 pts</div>
+    </div>
+    <div class="rank-card">
+      <span class="rank-icon">V</span>
+      <div class="rank-name">CATTLE BARON</div>
+      <div class="rank-mult">3x</div>
+      <div class="rank-req">100,000 pts</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========= REWARDS FLOW ========= -->
+<section class="flow-section" id="rewards">
+  <div class="flow-inner">
+    <div class="section-label" style="justify-content:center">The Money Flow</div>
+    <h2>Where Rewards Come From</h2>
+    <p class="section-intro" style="margin-left:auto;margin-right:auto;text-align:center">
+      No inflation. No emissions. Rewards are funded entirely by real trading volume on $RANCH.
+    </p>
+
+    <div class="flow-chain">
+      <div class="flow-node">
+        <div class="flow-title">$RANCH TRADES</div>
+        <div class="flow-desc">Every buy/sell on Pump.fun</div>
+      </div>
+      <span class="flow-arrow">--></span>
+      <div class="flow-node">
+        <div class="flow-title">CREATOR FEES</div>
+        <div class="flow-desc">0.05% - 0.95% per trade</div>
+      </div>
+      <span class="flow-arrow">--></span>
+      <div class="flow-node">
+        <div class="flow-title">WEEKLY USDC</div>
+        <div class="flow-desc">Distributed every Monday to holders who grind</div>
+      </div>
+      <span class="flow-arrow">--></span>
+      <div class="flow-node">
+        <div class="flow-title">YOUR WALLET</div>
+        <div class="flow-desc">Proportional to your points</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========= CTA ========= -->
+<section class="cta" id="join">
+  <h2>Stake Your<br><span class="accent">Claim</span></h2>
+  <p>
+    The ranch is live. Hold $RANCH, grind daily tasks, earn weekly USDC.
+    Sellers get nothing. Diamond hands eat.
+  </p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="/app/" class="btn-primary" style="text-decoration:none;display:inline-block">ENTER THE RANCH</a>
+    <a href="https://pump.fun/coin/Enzqw4s6cwjTbd67ud1mgc9Wj6wh4GHMP7h1Y9Kypump" target="_blank" rel="noopener" class="btn-ghost" style="text-decoration:none;display:inline-block">BUY $RANCH</a>
+  </div>
+</section>
+
+<!-- ========= FOOTER ========= -->
+
+  <section class="live-stats" style="padding:3rem 2rem;text-align:center;border-top:1px solid rgba(212,166,54,0.1);border-bottom:1px solid rgba(212,166,54,0.1);background:rgba(212,166,54,0.02)">
+    <div style="display:flex;justify-content:center;gap:4rem;flex-wrap:wrap;max-width:900px;margin:0 auto">
+      <div>
+        <div id="stat-ranchers" style="font-family:'Rye',serif;font-size:3rem;color:#d4a636;line-height:1">--</div>
+        <div style="font-size:0.6rem;color:#9c8e78;letter-spacing:0.2em;text-transform:uppercase;margin-top:0.3rem">Total Ranchers</div>
+      </div>
+      <div>
+        <div id="stat-eligible" style="font-family:'Rye',serif;font-size:3rem;color:#d4a636;line-height:1">--</div>
+        <div style="font-size:0.6rem;color:#9c8e78;letter-spacing:0.2em;text-transform:uppercase;margin-top:0.3rem">Eligible Today</div>
+      </div>
+      <div>
+        <div id="stat-paid" style="font-family:'Rye',serif;font-size:3rem;color:#4caf50;line-height:1">--</div>
+        <div style="font-size:0.6rem;color:#9c8e78;letter-spacing:0.2em;text-transform:uppercase;margin-top:0.3rem">USDC Paid Out</div>
+      </div>
+    </div>
+  </section>
+<footer>
+  <div class="footer-brand">SOL RANCH</div>
+  <ul class="footer-links">
+    <li><a href="https://x.com/Solranchfarm" target="_blank" rel="noopener">Twitter / X</a></li>
+    <li><a href="https://t.me/Solranchfarm" target="_blank" rel="noopener">Telegram</a></li>
+    <li><a href="/docs">Docs</a></li>
+    <li><a href="https://pump.fun/coin/Enzqw4s6cwjTbd67ud1mgc9Wj6wh4GHMP7h1Y9Kypump" target="_blank" rel="noopener">Pump.fun</a></li>
+  </ul>
+  <div class="footer-copy">Frontier 2026. All rights reserved.</div>
+</footer>
+<script>
+// Stars
+var starsContainer = document.getElementById('stars');
+for(var i = 0; i < 80; i++){
+  var star = document.createElement('div');
+  star.className = 'star';
+  star.style.left = Math.random() * 100 + '%';
+  star.style.top = Math.random() * 55 + '%';
+  star.style.animationDelay = (Math.random() * 4) + 's';
+  star.style.animationDuration = (3 + Math.random() * 3) + 's';
+  if(Math.random() > 0.85){
+    star.style.width = '2px';
+    star.style.height = '2px';
+    star.style.boxShadow = '0 0 3px rgba(245,239,230,0.3)';
+  }
+  starsContainer.appendChild(star);
+}
+// Scroll reveal
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if(entry.isIntersecting){
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('.how-card, .rank-card, .flow-node').forEach(function(el) {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+  observer.observe(el);
+});
+// Live stats — populates both ticker and bottom stats
+Promise.all([
+  fetch('/api/stats').then(function(r){return r.json()}).catch(function(){return {}}),
+  fetch('/api/rewards/pool').then(function(r){return r.json()}).catch(function(){return {}}),
+  fetch('/api/token/treasury').then(function(r){return r.json()}).catch(function(){return {}})
+]).then(function(results) {
+  var stats = results[0];
+  var pool = results[1];
+  var treasury = results[2];
+  // Top ticker
+  var tp = document.getElementById('tick-paid');
+  var tr2 = document.getElementById('tick-ranchers');
+  var tb = document.getElementById('tick-burned');
+  var tt = document.getElementById('tick-treasury');
+  if (tp) tp.textContent = '$' + (stats.totalPaidUsdc || 0).toFixed(2);
+  if (tr2) tr2.textContent = stats.totalRanchers || 0;
+  if (tb) tb.textContent = (pool.total_burned_ranch || 0).toLocaleString();
+  if (tt) tt.textContent = '$' + (treasury.usdcBalance || 0).toFixed(2);
+  // Bottom stats
+  var sr = document.getElementById('stat-ranchers');
+  var se = document.getElementById('stat-eligible');
+  var sp = document.getElementById('stat-paid');
+  if (sr) sr.textContent = stats.totalRanchers || 0;
+  if (se) se.textContent = stats.eligibleToday || 0;
+  if (sp) sp.textContent = '$' + (stats.totalPaidUsdc || 0).toFixed(2);
+}).catch(function(e){ console.log('Stats error:', e); });
+</script>
+</body>
+</html>

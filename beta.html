@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sol Ranch — Beta Tester Signup</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0806;color:#c4a882;font-family:'Georgia',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{max-width:440px;width:100%;padding:40px 30px;border:1px solid rgba(212,166,54,0.15);background:linear-gradient(160deg,rgba(42,31,20,0.4),rgba(17,14,10,0.9))}
+h1{font-size:28px;color:#d4a636;margin-bottom:8px;letter-spacing:1px}
+.sub{font-size:14px;color:#8b7355;margin-bottom:24px;line-height:1.7}
+.count{font-size:13px;color:#4caf50;margin-bottom:20px;padding:8px 12px;background:rgba(76,175,80,0.06);border:1px solid rgba(76,175,80,0.15);border-radius:4px;text-align:center}
+label{font-size:12px;color:#8b7355;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px}
+input{width:100%;padding:14px;background:rgba(42,31,20,0.5);border:1px solid rgba(139,115,85,0.2);color:#e8dcc8;font-family:inherit;font-size:14px;outline:none;margin-bottom:16px;border-radius:4px}
+input:focus{border-color:#d4a636}
+button{width:100%;padding:14px;background:#d4a636;color:#0a0806;border:none;font-family:inherit;font-size:16px;font-weight:bold;letter-spacing:2px;cursor:pointer;border-radius:4px}
+button:hover{background:#f0c040}
+button:disabled{opacity:0.5;cursor:not-allowed}
+.note{font-size:11px;color:#8b7355;margin-top:16px;line-height:1.6;text-align:center}
+.success{padding:20px;text-align:center;color:#4caf50;font-size:16px;display:none}
+.error{color:#ff6b6b;font-size:12px;margin-bottom:10px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="text-align:center;margin-bottom:16px"><img src="/img/mascot-256.png" alt="Sol Ranch" style="width:80px;height:80px;image-rendering:pixelated"></div><h1 style="text-align:center">Beta Testers Wanted</h1>
+  <div class="sub">Sol Ranch is coming to the Google Play Store. We need 12 Android users to join our closed beta before we go live.</div>
+  <div class="count" id="count">Loading spots...</div>
+  <form id="form" onsubmit="return submitForm(event)">
+    <label>Your Gmail Address</label>
+    <input type="email" id="email" placeholder="your@gmail.com" required>
+    <label>Your Ranch Name (optional)</label>
+    <input type="text" id="ranch" placeholder="e.g. Diamond Ranch">
+    <div class="error" id="error"></div>
+    <button type="submit" id="btn">JOIN BETA</button>
+  </form>
+  <div class="success" id="success">🎉 You're in! We'll add you to the beta shortly.</div>
+  <div class="note">Your email is private. Only used to add you to Google Play beta testing. No spam, no sharing.</div>
+</div>
+<script>
+async function loadCount() {
+  try {
+    const r = await fetch('/api/beta/count');
+    const d = await r.json();
+    document.getElementById('count').textContent = d.count + '/12 beta spots filled';
+    if (d.count >= 12) {
+      document.getElementById('count').textContent = 'All 12 spots filled! 🎉';
+      document.getElementById('count').style.color = '#d4a636';
+    }
+  } catch(e) {
+    document.getElementById('count').textContent = 'Be one of 12 beta testers';
+  }
+}
+async function submitForm(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const ranch = document.getElementById('ranch').value.trim();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('error');
+  err.style.display = 'none';
+  if (!email.endsWith('@gmail.com')) {
+    err.textContent = 'Must be a Gmail address (required for Google Play beta)';
+    err.style.display = 'block';
+    return false;
+  }
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+  try {
+    const r = await fetch('/api/beta/signup', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, ranch_name: ranch})
+    });
+    const d = await r.json();
+    if (d.error) {
+      err.textContent = d.error;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'JOIN BETA';
+    } else {
+      document.getElementById('form').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+      loadCount();
+    }
+  } catch(e) {
+    err.textContent = 'Something went wrong. Try again.';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'JOIN BETA';
+  }
+  return false;
+}
+loadCount();
+</script>
+</body>
+</html>

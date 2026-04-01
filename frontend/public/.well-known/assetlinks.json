@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "farm.solranch.app",
+    "sha256_cert_fingerprints": ["9F:9C:95:F4:8F:DD:86:8E:4E:D4:8D:37:E6:9F:78:F5:64:82:9E:73:65:F2:77:E0:79:2C:1E:FE:8B:24:5D:CD"]
+  }
+}]

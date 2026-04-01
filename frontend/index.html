@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;700;900&family=Big+Shoulders+Text:wght@400;600;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/dev/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/dev/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/dev/apple-touch-icon.png">
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#d4a636" />
+    <link rel="manifest" href="/dev/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SOL RANCH — The First Virtual Ranch for Degens</title>
+    <meta name="description" content="Stake your claim. Earn daily rewards from real trading volume on Solana." />
+    <meta property="og:title" content="SOL RANCH" />
+    <meta property="og:description" content="The First Virtual Ranch for Degens. Earn daily $RANCH rewards." />
+    <style>
+      body { margin: 0; background: #0a0806; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/dev/sw.js').catch(() => {});
+    }
+    </script>
+  </body>
+</html>
