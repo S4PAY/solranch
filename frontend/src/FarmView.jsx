@@ -113,6 +113,33 @@ var BUILDINGS = {
 
 
 
+// Map DB names to BUILDINGS keys
+var DB_TO_KEY = {};
+(function() {
+  // Direct matches
+  Object.keys(BUILDINGS).forEach(function(k) { DB_TO_KEY[k] = k; });
+  // Machines: DB uses underscores
+  DB_TO_KEY["butter_churn"] = "butterchurn";
+  DB_TO_KEY["mayo_maker"] = "mayomaker";
+  DB_TO_KEY["cloth_maker"] = "clothmaker";
+  // Crops: DB has no prefix
+  DB_TO_KEY["radish"] = "crop_radish";
+  DB_TO_KEY["carrot"] = "crop_carrot";
+  DB_TO_KEY["potato"] = "crop_potato";
+  DB_TO_KEY["tomato"] = "crop_tomato";
+  DB_TO_KEY["strawberry"] = "crop_strawberry";
+  DB_TO_KEY["watermelon"] = "crop_watermelon";
+  // Deco: DB uses underscores
+  DB_TO_KEY["wood_fence"] = "woodfence";
+  DB_TO_KEY["stone_fence"] = "stonefence";
+  DB_TO_KEY["flower_blue"] = "flower_blue";
+  DB_TO_KEY["flower_white"] = "flower_white";
+  DB_TO_KEY["gate_wood"] = "gate_wood";
+  DB_TO_KEY["gate_stone"] = "gate_stone";
+  DB_TO_KEY["chicken_brown"] = "chicken_b";
+})();
+function dbToKey(name) { return DB_TO_KEY[name] || name; }
+
 function getTier(pts) {
   if (pts >= 50000) return { name: "Diamond", color: "#b9f2ff", next: null };
   if (pts >= 20000) return { name: "Platinum", color: "#e5e4e2", next: 50000 };
@@ -586,35 +613,41 @@ export default function FarmView() {
   var [toast, setToast] = useState(null);
   var [shopItems, setShopItems] = useState(null);
   var [farmData, setFarmData] = useState(null);
+  var [sceneReady, setSceneReady] = useState(false);
 
   // Hydrate farm from DB
+  var _hydrated = useRef(null);
   useEffect(function() {
-    if (!farmData) return;
+    if (!farmData || !sceneReady) return;
+    // Skip if same data
+    var key = JSON.stringify(farmData.buildings || []) + JSON.stringify(farmData.animals || []) + JSON.stringify(farmData.crops || []);
+    if (_hydrated.current === key) return;
+    _hydrated.current = key;
     var placed = [];
     // Buildings
     if (farmData.buildings) farmData.buildings.forEach(function(b) {
-      var def = BUILDINGS[b.building_type];
-      if (def) placed.push({ type: b.building_type, tx: b.tile_x, ty: b.tile_y, w: def.w, h: def.h, dbId: b.id, dbCat: "building" });
+      var def = BUILDINGS[dbToKey(b.building_type)];
+      if (def) placed.push({ type: dbToKey(b.building_type), tx: b.tile_x, ty: b.tile_y, w: def.w, h: def.h, dbId: b.id, dbCat: "building" });
     });
     // Animals
     if (farmData.animals) farmData.animals.forEach(function(a) {
-      var def = BUILDINGS[a.animal_type];
-      if (def) placed.push({ type: a.animal_type, tx: a.tile_x, ty: a.tile_y, w: def.w, h: def.h, dbId: a.id, dbCat: "animal" });
+      var def = BUILDINGS[dbToKey(a.animal_type)];
+      if (def) placed.push({ type: dbToKey(a.animal_type), tx: a.tile_x, ty: a.tile_y, w: def.w, h: def.h, dbId: a.id, dbCat: "animal" });
     });
     // Crops
     if (farmData.crops) farmData.crops.forEach(function(c) {
-      var def = BUILDINGS[c.crop_type];
-      if (def) placed.push({ type: c.crop_type, tx: c.tile_x, ty: c.tile_y, w: def.w, h: def.h, dbId: c.id, dbCat: "crop", plantedAt: new Date(c.planted_at).getTime(), stage: c.stage });
+      var def = BUILDINGS[dbToKey(c.crop_type)];
+      if (def) placed.push({ type: dbToKey(c.crop_type), tx: c.tile_x, ty: c.tile_y, w: def.w, h: def.h, dbId: c.id, dbCat: "crop", plantedAt: new Date(c.planted_at).getTime(), stage: c.stage });
     });
     // Machines
     if (farmData.machines) farmData.machines.forEach(function(m) {
-      var def = BUILDINGS[m.machine_type];
-      if (def) placed.push({ type: m.machine_type, tx: m.tile_x, ty: m.tile_y, w: def.w, h: def.h, dbId: m.id, dbCat: "machine" });
+      var def = BUILDINGS[dbToKey(m.machine_type)];
+      if (def) placed.push({ type: dbToKey(m.machine_type), tx: m.tile_x, ty: m.tile_y, w: def.w, h: def.h, dbId: m.id, dbCat: "machine" });
     });
     // Decorations
     if (farmData.decorations) farmData.decorations.forEach(function(d) {
-      var def = BUILDINGS[d.deco_type];
-      if (def) placed.push({ type: d.deco_type, tx: d.tile_x, ty: d.tile_y, w: def.w, h: def.h, dbId: d.id, dbCat: "deco" });
+      var def = BUILDINGS[dbToKey(d.deco_type)];
+      if (def) placed.push({ type: dbToKey(d.deco_type), tx: d.tile_x, ty: d.tile_y, w: def.w, h: def.h, dbId: d.id, dbCat: "deco" });
     });
     setPlacedBuildings(placed);
     // Chunks
@@ -623,7 +656,7 @@ export default function FarmView() {
       farmData.chunks.forEach(function(k) { chunks.add(k); });
       setUnlocked(chunks);
     }
-  }, [farmData]);
+  }, [farmData, sceneReady]);
 
   var [buyItem, setBuyItem] = useState(null);
   var placingRef = useRef(null);
@@ -885,7 +918,8 @@ export default function FarmView() {
         this.input.on("pointermove", function (pointer) {
           if (pointer.isDown) {
             var totalDist = Math.abs(pointer.x - self.dragStartX) + Math.abs(pointer.y - self.dragStartY);
-            if (totalDist > 25 && !placingRef.current) {
+            if (placingRef.current) return;
+            if (totalDist > 25) {
               self.isDragging = true;
               var dx = pointer.x - pointer.prevPosition.x;
               var dy = pointer.y - pointer.prevPosition.y;
@@ -895,49 +929,43 @@ export default function FarmView() {
           }
         }, this);
 
-        // Move ghost during placement
+        // Move ghost during placement (works during drag too)
         this.input.on("pointermove", function (pointer) {
           if (!placingRef.current) return;
+          var _pt = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
           var worldPoint = cam.getWorldPoint(pointer.x, pointer.y);
-          var def = BUILDINGS[placingRef.current];
+          var def = BUILDINGS[_pt];
           if (!def) return;
           var tx = Math.floor(worldPoint.x / TILE);
           var ty = Math.floor(worldPoint.y / TILE);
           tx = Math.max(0, Math.min(MAP - def.w, tx));
           ty = Math.max(0, Math.min(MAP - def.h, ty));
           self.ghostPos = { x: tx, y: ty };
-          self.drawGhost(placingRef.current, tx, ty);
+          self.drawGhost(_pt, tx, ty);
+          window._srGhostValid = self.isValidPlacement(_pt, tx, ty);
+          window._srGhostPos = { x: tx, y: ty };
         }, this);
 
         // Tap handler
         this.input.on("pointerup", function (pointer) {
           if (self.isDragging) return;
 
-          // Placement mode
+          // Placement mode: update ghost position, show confirm UI
           if (placingRef.current) {
-            var placeType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
-            var def = BUILDINGS[placeType];
-            var gx = self.ghostPos.x;
-            var gy = self.ghostPos.y;
-            var placeType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
-            var placeCat = typeof placingRef.current === "object" ? placingRef.current.category : null;
-            if (def && self.isValidPlacement(placeType, gx, gy)) {
-              var newBuilding = { type: placeType, tx: gx, ty: gy, w: def.w, h: def.h };
-              if (def.crop) { newBuilding.plantedAt = Date.now(); newBuilding.stage = 0; }
-              setPlacedBuildings(function(prev) { return prev.concat([newBuilding]); });
-              setPlacing(null);
-              self.ghostGraphics.clear();
-              if (self.ghostSprite) self.ghostSprite.setVisible(false);
-              self.drawAllBuildings(placedRef.current.concat([newBuilding]));
-              setPanel(null);
-              // POST to API if from inventory
-              if (placeCat && window._srWallet) {
-                api("/farm/place", { method: "POST", body: JSON.stringify({ wallet: window._srWallet, itemCategory: placeCat, itemType: placeType, tileX: gx, tileY: gy }) })
-                  .then(function(data) {
-                    if (data && data.error) { console.error("[PLACE]", data.error); }
-                    api("/farm/" + window._srWallet).then(function(d) { if (d) setFarmData(d); });
-                  });
-              }
+            // Just update the ghost — don't auto-place. User confirms via button.
+            var _pt = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
+            var def = BUILDINGS[_pt];
+            if (def) {
+              var worldPt = cam.getWorldPoint(pointer.x, pointer.y);
+              var gx = Math.floor(worldPt.x / TILE);
+              var gy = Math.floor(worldPt.y / TILE);
+              gx = Math.max(0, Math.min(MAP - def.w, gx));
+              gy = Math.max(0, Math.min(MAP - def.h, gy));
+              self.ghostPos = { x: gx, y: gy };
+              self.drawGhost(_pt, gx, gy);
+              // Store for confirm button
+              window._srGhostValid = self.isValidPlacement(_pt, gx, gy);
+              window._srGhostPos = { x: gx, y: gy };
             }
             return;
           }
@@ -969,7 +997,12 @@ export default function FarmView() {
               var tbElapsed = (Date.now() - tb.plantedAt) / 1000;
               var tbTotal = CROP_GROW_SECONDS[tb.type] || 60;
               if (tbElapsed >= tbTotal) {
-                // Harvest! Remove crop and show feedback
+                // Harvest! Remove crop via API
+                if (tb.dbId && window._srWallet) {
+                  api("/farm/harvest", { method: "POST", body: JSON.stringify({ wallet: window._srWallet, cropId: tb.dbId }) }).then(function(data) {
+                    if (data && data.success) { api("/farm/" + window._srWallet).then(function(d) { if (d) setFarmData(d); }); }
+                  });
+                }
                 setPlacedBuildings(function(prev) { return prev.filter(function(_, idx) { return idx !== tappedBuilding; }); });
                 // Show harvest toast
                 var harvestText = self.add.text(
@@ -1016,7 +1049,7 @@ export default function FarmView() {
         this.pinchDist = 0;
 
         this.input.on("pointermove", function () {
-          if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
+          if (this.input.pointer1.isDown && this.input.pointer2.isDown && !placingRef.current) {
             var dx = this.input.pointer1.x - this.input.pointer2.x;
             var dy = this.input.pointer1.y - this.input.pointer2.y;
             var dist = Math.sqrt(dx * dx + dy * dy);
@@ -1035,12 +1068,15 @@ export default function FarmView() {
 
         // Mouse wheel zoom
         this.input.on("wheel", function (pointer, gameObjects, deltaX, deltaY) {
+          if (placingRef.current) return;
           var zoomFactor = deltaY < 0 ? 1.1 : 0.9;
           var newZoom = Phaser.Math.Clamp(cam.zoom * zoomFactor, sceneRef.current.minZoom || 0.8, 6);
           cam.setZoom(newZoom);
         }, this);
 
         // Resize
+        setSceneReady(true);
+
         this.scale.on("resize", function (gameSize) {
           cam.setViewport(0, 0, gameSize.width, gameSize.height);
         }, this);
@@ -1317,10 +1353,10 @@ export default function FarmView() {
   }, [unlocked]);
 
   useEffect(function () {
-    if (sceneRef.current && sceneRef.current.buildingsGraphics) {
+    if (sceneReady && sceneRef.current && sceneRef.current.buildingsGraphics) {
       sceneRef.current.drawAllBuildings(placedBuildings);
     }
-  }, [placedBuildings]);
+  }, [placedBuildings, sceneReady]);
 
   function zoomIn() {
     if (!sceneRef.current) return;
@@ -1365,6 +1401,46 @@ export default function FarmView() {
 
   var panelCats = { buildings: ["farm","home"], machines: ["machine"], animals: ["animal"], crops: ["crop"], deco: ["nature","deco"] };
   var panelTitles = { buildings: "Buildings & Houses", machines: "Machines", animals: "Animals", crops: "Crops", deco: "Nature & Decor", shop: "Supply Shop" };
+
+  function confirmPlace() {
+    if (!placingRef.current || !window._srGhostPos) return;
+    var placeType = typeof placingRef.current === "object" ? placingRef.current.type : placingRef.current;
+    var placeCat = typeof placingRef.current === "object" ? placingRef.current.category : null;
+    var placeDbName = typeof placingRef.current === "object" ? (placingRef.current.dbName || placeType) : placeType;
+    var def = BUILDINGS[placeType];
+    var gx = window._srGhostPos.x, gy = window._srGhostPos.y;
+    if (!def || !sceneRef.current || !sceneRef.current.isValidPlacement(placeType, gx, gy)) {
+      showToastMsg("Invalid position", "error"); return;
+    }
+    var newBuilding = { type: placeType, tx: gx, ty: gy, w: def.w, h: def.h };
+    if (def.crop) { newBuilding.plantedAt = Date.now(); newBuilding.stage = 0; }
+    setPlacedBuildings(function(prev) { return prev.concat([newBuilding]); });
+    setPlacing(null);
+    if (sceneRef.current) {
+      sceneRef.current.ghostGraphics.clear();
+      if (sceneRef.current.ghostSprite) sceneRef.current.ghostSprite.setVisible(false);
+      if (sceneRef.current.ghostLabel) sceneRef.current.ghostLabel.setText("");
+      sceneRef.current.drawAllBuildings(placedRef.current.concat([newBuilding]));
+    }
+    window._srGhostPos = null; window._srGhostValid = null;
+    if (placeCat && window._srWallet) {
+      api("/farm/place", { method: "POST", body: JSON.stringify({ wallet: window._srWallet, itemCategory: placeCat, itemType: placeDbName, tileX: gx, tileY: gy }) })
+        .then(function(data) {
+          if (data && data.error) { console.error("[PLACE]", data.error); }
+          api("/farm/" + window._srWallet).then(function(d) { if (d) setFarmData(d); });
+        });
+    }
+  }
+
+  function cancelPlace() {
+    setPlacing(null);
+    window._srGhostPos = null; window._srGhostValid = null;
+    if (sceneRef.current) {
+      sceneRef.current.ghostGraphics.clear();
+      if (sceneRef.current.ghostSprite) sceneRef.current.ghostSprite.setVisible(false);
+      if (sceneRef.current.ghostLabel) sceneRef.current.ghostLabel.setText("");
+    }
+  }
 
   function closePanel() {
     setPanel(null); setSelectedTile(null); setPlacing(null);
@@ -1560,7 +1636,7 @@ export default function FarmView() {
                       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
                         React.createElement("span", { style: { fontSize: 16, fontWeight: 700, color: "#f0c040" } }, "x" + item.quantity),
                         React.createElement("button", {
-                          onClick: function() { setPanel(null); setPlacing({ type: item.item_type, category: item.item_category }); showToastMsg("Tap the farm to place " + item.item_type.replace(/_/g, " ")); },
+                          onClick: function() { setPanel(null); setPlacing({ type: dbToKey(item.item_type), category: item.item_category, dbName: item.item_type }); showToastMsg("Tap the farm to place " + item.item_type.replace(/_/g, " ")); },
                           style: { padding: "6px 14px", border: "none", borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: "pointer", color: "#e8ddd0", background: "linear-gradient(180deg,#3a5a2a,#2d4a20)", boxShadow: "inset 0 1px 0 rgba(100,160,80,.2),0 2px 4px rgba(0,0,0,.3)" }
                         }, "PLACE")
                       )
@@ -1568,6 +1644,67 @@ export default function FarmView() {
                   })
                 )
               : React.createElement("div", { style: { padding: 20, textAlign: "center", color: "#6d5838", fontSize: 12 } }, "Empty. Buy items from the Shop first.")
+          ),
+
+          // EDIT
+          panel === "edit" && editingIdx !== null && placedBuildings[editingIdx] && React.createElement("div", {
+            style: { background: "rgba(14,11,8,0.95)", borderRadius: 12, border: "1px solid #2a1f14", padding: 16, backdropFilter: "blur(10px)", textAlign: "center" }
+          },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 700, color: "#e8ddd0", marginBottom: 4, textShadow: "0 1px 2px rgba(0,0,0,0.5)" } }, (BUILDINGS[placedBuildings[editingIdx].type] || {}).label || placedBuildings[editingIdx].type),
+            React.createElement("div", { style: { fontSize: 11, color: "#9c8e78", marginBottom: 12 } }, "Position: (" + placedBuildings[editingIdx].tx + ", " + placedBuildings[editingIdx].ty + ")"),
+            placedBuildings[editingIdx].plantedAt && React.createElement(CropProgress, { building: placedBuildings[editingIdx] }),
+            React.createElement("button", {
+              onClick: function() {
+                var b = placedBuildings[editingIdx];
+                var moveCat = b.dbCat || "building";
+                var moveType = b.type;
+                // Remove from map via API, then enter placement mode
+                if (b.dbId && wallet) {
+                  api("/farm/remove", { method: "POST", body: JSON.stringify({ wallet: wallet, itemCategory: moveCat, itemId: b.dbId }) })
+                    .then(function(data) {
+                      if (data && data.success) {
+                        setPlacing({ type: moveType, category: moveCat });
+                        setEditingIdx(null); setPanel(null);
+                        showToastMsg("Tap to re-place " + moveType.replace(/_/g, " "));
+                        api("/farm/" + wallet).then(function(d) { if (d) setFarmData(d); });
+                      } else {
+                        showToastMsg(data ? data.error : "Move failed", "error");
+                      }
+                    });
+                } else {
+                  setPlacedBuildings(function(prev) { return prev.filter(function(_, i) { return i !== editingIdx; }); });
+                  setPlacing(moveType);
+                  setEditingIdx(null); setPanel(null);
+                }
+              },
+              style: { display: "block", width: "100%", padding: "10px", marginBottom: 8, background: "linear-gradient(180deg,#4a6a2a,#3a5a1a)", color: "#fff", border: "2px solid #6a8a3a", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: 2 }
+            }, "MOVE"),
+            React.createElement("button", {
+              onClick: function() {
+                var b = placedBuildings[editingIdx];
+                var removeCat = b.dbCat || "building";
+                if (b.dbId && wallet) {
+                  api("/farm/remove", { method: "POST", body: JSON.stringify({ wallet: wallet, itemCategory: removeCat, itemId: b.dbId }) })
+                    .then(function(data) {
+                      if (data && data.success) {
+                        setEditingIdx(null); setPanel(null);
+                        showToastMsg(data.message || "Removed!");
+                        api("/farm/" + wallet).then(function(d) { if (d) setFarmData(d); });
+                      } else {
+                        showToastMsg(data ? data.error : "Remove failed", "error");
+                      }
+                    });
+                } else {
+                  setPlacedBuildings(function(prev) { return prev.filter(function(_, i) { return i !== editingIdx; }); });
+                  setEditingIdx(null); setPanel(null);
+                }
+              },
+              style: { display: "block", width: "100%", padding: "10px", background: "linear-gradient(180deg,#8a2a2a,#6a1a1a)", color: "#fff", border: "2px solid #aa4a4a", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: 2 }
+            }, "REMOVE"),
+            React.createElement("button", {
+              onClick: function() { setEditingIdx(null); setPanel(null); if (sceneRef.current) sceneRef.current.selectGraphics.clear(); },
+              style: { display: "block", width: "100%", padding: "8px", marginTop: 8, background: "transparent", color: "#6d5838", border: "none", fontSize: 11, cursor: "pointer", letterSpacing: 2 }
+            }, "CANCEL")
           ),
 
           // FEED
@@ -1640,6 +1777,20 @@ export default function FarmView() {
               textShadow: "0 1px 2px rgba(0,0,0,0.5)",
             }
           }, unlocking ? "VERIFYING..." : "BURN & UNLOCK")
+        ),
+
+        // PLACEMENT CONFIRM BAR
+        placing && React.createElement("div", {
+          style: { display: "flex", gap: 8, padding: "10px 16px", justifyContent: "center" }
+        },
+          React.createElement("button", {
+            onClick: cancelPlace,
+            style: { flex: 1, maxWidth: 160, padding: "10px 0", background: "linear-gradient(180deg,#3d2e1e,#2a1f14)", border: "2px solid #5a4a2a", borderRadius: 8, color: "#9c8e78", fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 2 }
+          }, "CANCEL"),
+          React.createElement("button", {
+            onClick: confirmPlace,
+            style: { flex: 1, maxWidth: 160, padding: "10px 0", border: "2px solid #6a8a3a", borderRadius: 8, color: "#e8ddd0", fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: 2, background: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),linear-gradient(180deg,#4a6a2a,#3a5a1a)", boxShadow: "inset 0 1px 0 rgba(100,160,80,.2),0 2px 6px rgba(0,0,0,.4)" }
+          }, "PLACE HERE")
         ),
 
         // ═══ BOTTOM TOOLBAR ═══
