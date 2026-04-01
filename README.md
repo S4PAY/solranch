@@ -5,8 +5,8 @@
 <h1 align="center">SOL RANCH</h1>
 
 <p align="center">
-  <b>Burn tokens. Build your ranch. Earn USDC.</b><br/>
-  <sub>A gamified DeFi farm on Solana with pixel art, real economics, and weekly payouts.</sub>
+  <b>The First Virtual Ranch for Degens</b><br/>
+  <sub>Hold $RANCH. Build your farm. Earn weekly USDC from real trading volume on Solana.</sub>
 </p>
 
 <p align="center">
@@ -28,11 +28,11 @@
 
 ## What is Sol Ranch?
 
-Sol Ranch is not another yield farm dashboard. It's a **full pixel art game** where your DeFi activity *is* the gameplay.
+Sol Ranch is the first virtual ranch on Solana — part DeFi, part pixel art game, all degen.
 
-You burn `$RANCH` tokens to buy buildings, animals, crops, and decorations. You place them on a tile-based farm that you physically build out chunk by chunk. Everything you own generates daily points. Top ranchers earn real USDC every week.
+`$RANCH` trades on Pump.fun. Every trade generates creator fees that fund a **weekly USDC reward pool** distributed every Monday to active ranchers. Hold tokens, complete daily tasks, and climb the ranks. Sell during the week and your rewards go to diamond hands.
 
-No staking vaults. No liquidity pools. You burn tokens, you build a farm, you see it on screen, and you earn from it. The game *is* the protocol.
+The **farm game** takes it further: burn `$RANCH` to buy buildings, animals, crops, and decorations. Place them on a tile-based farm you build out chunk by chunk. Everything you own generates daily points that increase your share of the weekly payout. The game *is* the protocol.
 
 ---
 
