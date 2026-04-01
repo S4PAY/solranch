@@ -427,7 +427,70 @@ function CategoryContent({ cats, placing, onPlace }) {
   );
 }
 
-function ShopPanel({ shopItems }) {
+
+function BurnPopup({ item, cat, wallet, onClose, onSuccess }) {
+  var _tx = React.useState("");
+  var txSig = _tx[0], setTxSig = _tx[1];
+  var _sub = React.useState(false);
+  var submitting = _sub[0], setSubmitting = _sub[1];
+  var _err = React.useState(null);
+  var err = _err[0], setErr = _err[1];
+  var cost = parseInt(item.burn_cost);
+  var costStr = cost >= 1000000 ? (cost/1000000)+"M" : cost >= 1000 ? (cost/1000)+"k" : String(cost);
+  var BURN_ADDR = "1nc1nerator11111111111111111111111111111111";
+
+  function doBuy() {
+    if (!txSig.trim()) { setErr("Paste your TX signature"); return; }
+    setSubmitting(true); setErr(null);
+    api("/farm/buy", { method: "POST", body: JSON.stringify({ wallet: wallet, itemCategory: cat, itemType: item.name, quantity: 1, txSignature: txSig.trim() }) })
+      .then(function(data) {
+        setSubmitting(false);
+        if (!data) { setErr("Request failed"); return; }
+        if (data.error) { setErr(data.error); return; }
+        onSuccess(data);
+      });
+  }
+
+  return React.createElement("div", {
+    style: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16, boxSizing: "border-box" },
+    onClick: onClose,
+  },
+    React.createElement("div", {
+      onClick: function(e) { e.stopPropagation(); },
+      style: { background: "linear-gradient(180deg, #1a1510, #0e0b08)", border: "2px solid #3d2e1e", borderRadius: 12, padding: 24, maxWidth: 380, width: "100%", textAlign: "center", fontFamily: "'Pixelify Sans', sans-serif" }
+    },
+      React.createElement("div", { style: { fontSize: 18, color: "#d4a636", fontWeight: 700, marginBottom: 4, letterSpacing: 2 } }, "BUY " + item.name.replace(/_/g, " ").toUpperCase()),
+      React.createElement("div", { style: { fontSize: 28, color: "#f0c040", fontWeight: 700, margin: "12px 0", textShadow: "0 0 16px rgba(240,192,64,0.3)" } }, costStr + " $RANCH"),
+      React.createElement("div", { style: { fontSize: 11, color: "#9c8e78", marginBottom: 16, lineHeight: 1.6 } }, "Burn tokens to buy this item. Send exact amount to the burn address below, then paste the TX signature."),
+      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 1, marginBottom: 4 } }, "BURN ADDRESS"),
+      React.createElement("div", {
+        onClick: function() { try { navigator.clipboard.writeText(BURN_ADDR); } catch(e) {} },
+        style: { fontSize: 10, color: "#e8ddd0", background: "#0e0b08", border: "1px solid #2a1f14", borderRadius: 6, padding: "8px 10px", marginBottom: 12, wordBreak: "break-all", cursor: "pointer", userSelect: "all" }
+      }, BURN_ADDR),
+      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 1, marginBottom: 4 } }, "AMOUNT TO BURN"),
+      React.createElement("div", { style: { fontSize: 13, color: "#f0c040", fontWeight: 700, marginBottom: 12 } }, cost.toLocaleString() + " $RANCH"),
+      React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 1, marginBottom: 4 } }, "PASTE TX SIGNATURE"),
+      React.createElement("input", {
+        type: "text", value: txSig, placeholder: "Paste transaction signature...",
+        onChange: function(e) { setTxSig(e.target.value); },
+        style: { width: "100%", padding: "10px 12px", boxSizing: "border-box", background: "#0e0b08", border: "1px solid #2a1f14", borderRadius: 6, color: "#e8ddd0", fontFamily: "'Pixelify Sans', sans-serif", fontSize: 12, textAlign: "center", outline: "none", marginBottom: 12 }
+      }),
+      err && React.createElement("div", { style: { fontSize: 11, color: "#ff6b6b", marginBottom: 8 } }, err),
+      React.createElement("div", { style: { display: "flex", gap: 8 } },
+        React.createElement("button", {
+          onClick: onClose,
+          style: { flex: 1, padding: "10px 0", background: "linear-gradient(180deg,#3d2e1e,#2a1f14)", border: "none", borderRadius: 6, color: "#9c8e78", fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: 2 }
+        }, "CANCEL"),
+        React.createElement("button", {
+          onClick: doBuy, disabled: submitting,
+          style: { flex: 1, padding: "10px 0", border: "none", borderRadius: 6, color: "#e8ddd0", fontSize: 12, fontWeight: 700, cursor: submitting ? "default" : "pointer", letterSpacing: 2, opacity: submitting ? 0.5 : 1, background: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),linear-gradient(180deg,#8b5e3c,#6d4a2d 50%,#5c3f24)", boxShadow: "inset 0 1px 0 rgba(180,140,90,.3),inset 0 -1px 0 rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.4)" }
+        }, submitting ? "VERIFYING..." : "BURN & BUY")
+      )
+    )
+  );
+}
+
+function ShopPanel({ shopItems, onBuy }) {
   var cats = ["buildings","animals","crops","machines","decorations"];
   var catLabels = { buildings: "BLDG", animals: "PETS", crops: "CROP", machines: "MACH", decorations: "DECO" };
   var catIcons = { buildings: "\uD83C\uDFE0", animals: "\uD83D\uDC04", crops: "\uD83C\uDF3E", machines: "\u2699\uFE0F", decorations: "\uD83C\uDF33" };
@@ -457,11 +520,11 @@ function ShopPanel({ shopItems }) {
         );
       })
     ),
-    React.createElement(ShopRow, { items: items, cat: activeCat })
+    React.createElement(ShopRow, { items: items, cat: activeCat, onBuy: onBuy })
   );
 }
 
-function ShopRow({ items, cat }) {
+function ShopRow({ items, cat, onBuy }) {
   var scrollRef = React.useRef(null);
   function doScroll(dir) { if (scrollRef.current) scrollRef.current.scrollBy({ left: dir * 160, behavior: "smooth" }); }
   return React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
@@ -484,7 +547,7 @@ function ShopRow({ items, cat }) {
             thumbEl = React.createElement("img", { src: SPRITE_BASE + SPRITE_PATHS[spriteKey], style: { width: 24, height: 24, imageRendering: "pixelated", objectFit: "contain" } });
           }
         }
-        return React.createElement("div", { key: item.name, style: { width: 56, minWidth: 56, padding: "5px 2px 4px", borderRadius: 6, textAlign: "center", background: "linear-gradient(180deg, rgba(40,32,20,0.85), rgba(20,16,12,0.9))", border: "1px solid rgba(139,105,20,0.25)", boxShadow: "0 2px 6px rgba(0,0,0,0.5)", cursor: "pointer", flexShrink: 0 } },
+        return React.createElement("div", { key: item.name, onClick: function() { onBuy && onBuy(item, cat); }, style: { width: 56, minWidth: 56, padding: "5px 2px 4px", borderRadius: 6, textAlign: "center", background: "linear-gradient(180deg, rgba(40,32,20,0.85), rgba(20,16,12,0.9))", border: "1px solid rgba(139,105,20,0.25)", boxShadow: "0 2px 6px rgba(0,0,0,0.5)", cursor: "pointer", flexShrink: 0 } },
           React.createElement("div", { style: { width: 26, height: 26, margin: "0 auto 2px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" } },
             thumbEl || React.createElement("span", { style: { fontSize: 16 } }, "\uD83C\uDF31")
           ),
@@ -522,6 +585,7 @@ export default function FarmView() {
   var [toast, setToast] = useState(null);
   var [shopItems, setShopItems] = useState(null);
   var [farmData, setFarmData] = useState(null);
+  var [buyItem, setBuyItem] = useState(null);
   var placingRef = useRef(null);
   var placedRef = useRef([]);
   var unlockedRef = useRef(new Set(START_CHUNKS));
@@ -1223,13 +1287,27 @@ export default function FarmView() {
     cam.centerOn(MAP_PX / 2, MAP_PX / 2);
   }
 
+  var _unlockTx = useState("");
+  var unlockTx = _unlockTx[0], setUnlockTx = _unlockTx[1];
+  var _unlockErr = useState(null);
+  var unlockErr = _unlockErr[0], setUnlockErr = _unlockErr[1];
+  var _unlocking = useState(false);
+  var unlocking = _unlocking[0], setUnlocking = _unlocking[1];
+
   function doUnlock(cx, cy) {
-    setUnlocked(function (prev) {
-      var n = new Set(prev);
-      n.add(cx + "," + cy);
-      return n;
-    });
-    setPanel(null);
+    if (!wallet) return;
+    if (!unlockTx.trim()) { setUnlockErr("Paste your TX signature"); return; }
+    setUnlocking(true); setUnlockErr(null);
+    api("/farm/unlock", { method: "POST", body: JSON.stringify({ wallet: wallet, chunkX: cx, chunkY: cy, txSignature: unlockTx.trim() }) })
+      .then(function(data) {
+        setUnlocking(false);
+        if (!data) { setUnlockErr("Request failed"); return; }
+        if (data.error) { setUnlockErr(data.error); return; }
+        setUnlocked(function (prev) { var n = new Set(prev); n.add(cx + "," + cy); return n; });
+        setPanel(null); setUnlockTx(""); setUnlockErr(null);
+        showToastMsg(data.message || "Land unlocked!");
+        api("/farm/" + wallet).then(function(d) { if (d) setFarmData(d); });
+      });
   }
 
   var panelCats = { buildings: ["farm","home"], machines: ["machine"], animals: ["animal"], crops: ["crop"], deco: ["nature","deco"] };
@@ -1411,7 +1489,7 @@ export default function FarmView() {
           style: { position: "absolute", bottom: 140, left: 0, right: 0, zIndex: 8, padding: "4px 8px", maxHeight: "55vh", overflowY: "auto", background: "transparent" }
         },
           // SHOP
-          panel === "shop" && shopItems && React.createElement(ShopPanel, { shopItems: shopItems }),
+          panel === "shop" && shopItems && React.createElement(ShopPanel, { shopItems: shopItems, onBuy: function(item, cat) { setBuyItem({ item: item, cat: cat }); } }),
 
           // BAG
           panel === "bag" && React.createElement("div", {
@@ -1486,17 +1564,29 @@ export default function FarmView() {
           React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: "#d4a636", letterSpacing: 2, marginBottom: 4, textShadow: "0 2px 4px rgba(0,0,0,0.5)" } }, "EXPAND YOUR RANCH"),
           React.createElement("div", { style: { fontSize: 11, color: "#9c8e78", marginBottom: 10 } }, "Chunk (" + panel.cx + ", " + panel.cy + ")"),
           React.createElement("div", { style: { fontSize: 26, color: "#f0c040", fontWeight: 700, marginBottom: 14, textShadow: "0 0 16px rgba(240,192,64,0.3)" } }, (RING_COST[panel.ring] / 1000) + "k $RANCH"),
+          React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 1, marginBottom: 4 } }, "BURN ADDRESS"),
+          React.createElement("div", {
+            onClick: function() { try { navigator.clipboard.writeText("1nc1nerator11111111111111111111111111111111"); } catch(e) {} },
+            style: { fontSize: 9, color: "#e8ddd0", background: "#0e0b08", border: "1px solid #2a1f14", borderRadius: 6, padding: "6px 8px", marginBottom: 10, wordBreak: "break-all", cursor: "pointer", userSelect: "all" }
+          }, "1nc1nerator11111111111111111111111111111111"),
+          React.createElement("div", { style: { fontSize: 9, color: "#6d5838", letterSpacing: 1, marginBottom: 4 } }, "PASTE TX SIGNATURE"),
+          React.createElement("input", {
+            type: "text", value: unlockTx, placeholder: "Paste transaction signature...",
+            onChange: function(e) { setUnlockTx(e.target.value); },
+            style: { width: "100%", padding: "8px 10px", boxSizing: "border-box", background: "#0e0b08", border: "1px solid #2a1f14", borderRadius: 6, color: "#e8ddd0", fontFamily: "'Pixelify Sans', sans-serif", fontSize: 11, textAlign: "center", outline: "none", marginBottom: 10 }
+          }),
+          unlockErr && React.createElement("div", { style: { fontSize: 11, color: "#ff6b6b", marginBottom: 8 } }, unlockErr),
           React.createElement("button", {
             onClick: function () { doUnlock(panel.cx, panel.cy); },
+            disabled: unlocking,
             style: {
               padding: "10px 32px", color: "#e8ddd0", border: "2px solid #c8a84e", borderRadius: 8,
-              fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: 2,
+              fontSize: 14, fontWeight: 700, cursor: unlocking ? "default" : "pointer", letterSpacing: 2, opacity: unlocking ? 0.5 : 1,
               background: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),linear-gradient(180deg,#8b5e3c,#6d4a2d 50%,#5c3f24)",
               boxShadow: "inset 0 1px 0 rgba(180,140,90,.3),inset 0 -1px 0 rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.5)",
               textShadow: "0 1px 2px rgba(0,0,0,0.5)",
             }
-          }, "BURN & UNLOCK"),
-          React.createElement("div", { style: { fontSize: 9, color: "#3d2e1e", marginTop: 8 } }, "(Prototype - no burn in dev)")
+          }, unlocking ? "VERIFYING..." : "BURN & UNLOCK")
         ),
 
         // ═══ BOTTOM TOOLBAR ═══
@@ -1542,6 +1632,13 @@ export default function FarmView() {
         onSave: saveRanchName,
         onCancel: function() { setShowNameModal(false); setIsNewRancher(false); },
         isNew: isNewRancher,
+      }),
+
+      // BUY POPUP
+      buyItem && wallet && React.createElement(BurnPopup, {
+        item: buyItem.item, cat: buyItem.cat, wallet: wallet,
+        onClose: function() { setBuyItem(null); },
+        onSuccess: function(data) { setBuyItem(null); setToast({ message: data.message || "Purchased!", type: "success" }); setTimeout(function(){setToast(null);},3000); api("/farm/" + wallet).then(function(d){if(d)setFarmData(d);}); api("/farm/shop/items").then(function(d){if(d)setShopItems(d);}); }
       }),
 
       // TOAST
